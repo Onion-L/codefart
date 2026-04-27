@@ -48,10 +48,5 @@ rm -rf "$TMP_DIR"
 echo ""
 echo "✓ CodeFart installed successfully!"
 echo ""
-
-# Run setup
-echo "Setting up Claude hook..."
-$BIN_NAME setup
-
-echo ""
-echo "All done. Next time Claude responds, you'll hear it. 💨"
+echo "To enable Claude notifications, run:"
+echo "  codefart setup"
