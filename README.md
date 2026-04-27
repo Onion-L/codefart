@@ -36,13 +36,12 @@ codefart run -- npm run build     # Wrap any command
 
 ## Built-in themes
 
-| Theme | Sounds like |
+| Theme | Description |
 |---|---|
 | `classic` | The signature CodeFart sound |
 | `wet` | A wetter, more dramatic variant |
-| `tiny` | A small, polite notification fart |
-| `squeaky` | High-pitched, brief |
-| `thunder` | For those long CI runs |
+
+Add your own with `codefart set-sound <path>`.
 
 ## Uninstall
 
