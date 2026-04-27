@@ -187,12 +187,32 @@ fn cmd_update() -> Result<(), error::CodefartError> {
     Ok(())
 }
 
-fn cmd_preview(name: &str) -> Result<(), error::CodefartError> {
-    if !Config::is_valid_theme(name) {
-        return Err(error::CodefartError::UnknownTheme(name.to_string()));
+fn cmd_preview(name: &Option<String>) -> Result<(), error::CodefartError> {
+    if let Some(n) = name {
+        if !Config::is_valid_theme(n) {
+            return Err(error::CodefartError::UnknownTheme(n.to_string()));
+        }
+        println!("Previewing {}...", n);
+        return audio::play_theme(n);
     }
-    println!("Previewing {}...", name);
-    audio::play_theme(name)
+
+    // Interactive mode: select + preview in a loop, Ctrl-C to exit
+    let items: Vec<String> = config::BUILTIN_THEMES
+        .iter()
+        .map(|(n, desc)| format!("{:<12} {}", n, desc))
+        .collect();
+
+    loop {
+        let selection = dialoguer::Select::new()
+            .with_prompt("Preview theme (Ctrl-C to exit)")
+            .items(&items)
+            .default(0)
+            .interact()
+            .map_err(|e| error::CodefartError::Other(format!("selection failed: {}", e)))?;
+
+        let theme_name = config::BUILTIN_THEMES[selection].0;
+        let _ = audio::play_theme(theme_name);
+    }
 }
 
 fn cmd_run(args: &[String]) -> Result<(), error::CodefartError> {

@@ -37,10 +37,10 @@ pub enum Commands {
     /// Install the Stop hook into Claude Code settings
     Setup,
 
-    /// Preview a built-in theme without switching
+    /// Preview a built-in theme without switching (interactive if no name)
     Preview {
         /// Name of the theme to preview
-        name: String,
+        name: Option<String>,
     },
 
     /// Update codefart to the latest version
