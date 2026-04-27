@@ -62,25 +62,63 @@ fn cmd_list() -> Result<(), error::CodefartError> {
     Ok(())
 }
 
-fn cmd_theme(name: &str) -> Result<(), error::CodefartError> {
-    if !Config::is_valid_theme(name) {
+fn cmd_theme(name: &Option<String>) -> Result<(), error::CodefartError> {
+    let theme_name = match name {
+        Some(n) => n.clone(),
+        None => select_theme_interactive()?,
+    };
+
+    if !Config::is_valid_theme(&theme_name) {
         eprintln!(
             "Unknown theme: {}\nValid themes: {}",
-            name,
+            theme_name,
             config::BUILTIN_THEMES
                 .iter()
                 .map(|(n, _)| *n)
                 .collect::<Vec<_>>()
                 .join(", ")
         );
-        return Err(error::CodefartError::UnknownTheme(name.to_string()));
+        return Err(error::CodefartError::UnknownTheme(theme_name));
     }
 
     let mut config = Config::load()?;
-    config.theme = Some(name.to_string());
+    config.theme = Some(theme_name.clone());
     config.save()?;
-    println!("Theme set to \"{}\"", name);
+    println!("Theme set to \"{}\"", theme_name);
     Ok(())
+}
+
+fn select_theme_interactive() -> Result<String, error::CodefartError> {
+    let config = Config::load().unwrap_or_default();
+    let current = config.active_theme();
+
+    println!("Select a theme:");
+    for (i, (name, desc)) in config::BUILTIN_THEMES.iter().enumerate() {
+        let marker = if *name == current { " ← current" } else { "" };
+        println!("  {}) {:<12} {}{}", i + 1, name, desc, marker);
+    }
+    print!("\nEnter number (1-{}): ", config::BUILTIN_THEMES.len());
+    use std::io::{self, Write};
+    io::stdout().flush().unwrap();
+
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .map_err(|e| error::CodefartError::Other(format!("read failed: {}", e)))?;
+
+    let choice: usize = input
+        .trim()
+        .parse()
+        .map_err(|_| error::CodefartError::Other("invalid number".into()))?;
+
+    if choice < 1 || choice > config::BUILTIN_THEMES.len() {
+        return Err(error::CodefartError::Other(format!(
+            "choose 1-{}",
+            config::BUILTIN_THEMES.len()
+        )));
+    }
+
+    Ok(config::BUILTIN_THEMES[choice - 1].0.to_string())
 }
 
 fn cmd_set_sound(path: &str) -> Result<(), error::CodefartError> {

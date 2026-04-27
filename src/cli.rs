@@ -16,10 +16,10 @@ pub enum Commands {
     /// List all built-in sound themes
     List,
 
-    /// Switch to a built-in theme
+    /// Switch to a built-in theme (interactive selection if no name given)
     Theme {
-        /// Name of the theme (classic, wet, tiny, squeaky, thunder)
-        name: String,
+        /// Name of the theme
+        name: Option<String>,
     },
 
     /// Set a custom sound file (overrides theme)
