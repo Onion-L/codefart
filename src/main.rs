@@ -93,33 +93,24 @@ fn select_theme_interactive() -> Result<String, error::CodefartError> {
     let config = Config::load().unwrap_or_default();
     let current = config.active_theme();
 
-    println!("Select a theme:");
-    for (i, (name, desc)) in config::BUILTIN_THEMES.iter().enumerate() {
-        let marker = if *name == current { " ← current" } else { "" };
-        println!("  {}) {:<12} {}{}", i + 1, name, desc, marker);
-    }
-    print!("\nEnter number (1-{}): ", config::BUILTIN_THEMES.len());
-    use std::io::{self, Write};
-    io::stdout().flush().unwrap();
+    let items: Vec<String> = config::BUILTIN_THEMES
+        .iter()
+        .map(|(name, desc)| format!("{:<12} {}", name, desc))
+        .collect();
 
-    let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .map_err(|e| error::CodefartError::Other(format!("read failed: {}", e)))?;
+    let default_idx = config::BUILTIN_THEMES
+        .iter()
+        .position(|(n, _)| *n == current)
+        .unwrap_or(0);
 
-    let choice: usize = input
-        .trim()
-        .parse()
-        .map_err(|_| error::CodefartError::Other("invalid number".into()))?;
+    let selection = dialoguer::Select::new()
+        .with_prompt("Choose a theme")
+        .items(&items)
+        .default(default_idx)
+        .interact()
+        .map_err(|e| error::CodefartError::Other(format!("selection failed: {}", e)))?;
 
-    if choice < 1 || choice > config::BUILTIN_THEMES.len() {
-        return Err(error::CodefartError::Other(format!(
-            "choose 1-{}",
-            config::BUILTIN_THEMES.len()
-        )));
-    }
-
-    Ok(config::BUILTIN_THEMES[choice - 1].0.to_string())
+    Ok(config::BUILTIN_THEMES[selection].0.to_string())
 }
 
 fn cmd_set_sound(path: &str) -> Result<(), error::CodefartError> {
