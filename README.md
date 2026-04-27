@@ -47,9 +47,7 @@ codefart run -- npm run build     # Wrap any command
 ## Uninstall
 
 ```bash
-rm /usr/local/bin/codefart
-rm -rf ~/.config/codefart
-# Then remove the "codefart play" entry from ~/.claude/settings.json hooks.Stop
+curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/uninstall.sh | bash
 ```
 
 ## License
