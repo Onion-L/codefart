@@ -16,3 +16,8 @@ Thumbs.db
 *.dylib
 *.so
 *.dll
+
+
+# Added by cargo
+
+/target

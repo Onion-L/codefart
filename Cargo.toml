@@ -1,0 +1,19 @@
+[package]
+name = "codefart"
+version = "0.1.0"
+edition = "2024"
+description = "Play a sound when your AI finishes thinking"
+repository = "https://github.com/Onion-L/codefart"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+rodio = "0.18"
+rust-embed = "8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+dirs = "6"
+anyhow = "1"
+thiserror = "2"
+shellexpand = "3"

@@ -2,48 +2,30 @@
 
 ## 1. Claude Code Hook Schema 实测 ✅
 
-**结论：Stop hook schema 正确，触发正常。**
+Stop hook schema 正确，触发正常。
 
-测试配置：
-```json
-{
-  "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo $(date) HOOK_FIRED >> /tmp/test.txt && afplay /System/Library/Sounds/Ping.aiff"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+- [x] 响应完毕后触发 hook
+- [x] 音效正常播放（系统 Ping.aiff）
+- [x] hook JSON 结构被 Claude 接受
+- [x] `matcher: ""` 匹配所有 Stop 事件
 
-- [x] 响应完毕后是否触发 hook → **是**，`claude -p "say hi"` 返回 `hi` 后 `/tmp/test.txt` 写入成功
-- [x] 是否能听到系统提示音 → **是**，Ping.aiff 播放正常
-- [x] 配置结构是否被 Claude 接受 → **是**，无 JSON 校验报错
-- [x] `matcher` 空字符串是否匹配所有 Stop 事件 → **是**（至少匹配了 `-p` 模式）
+## 2. `codefart play` 作为 hook 命令 ✅
 
-## 2. `codefart play` 作为 hook 命令的延迟
+- [x] hook 执行 → codefart play → 音效播放，全链路端到端验证通过
+- [x] Claude 响应文本先显示，hook 后执行（不阻塞输出）
+- [ ] 长时间 Claude 会话中 hook 稳定性（需更多测试）
 
-- [ ] Hook 命令执行到音效播完的总延迟是否在 1 秒以内
-- [ ] 是否影响 Claude 显示响应文本的时机
-- [ ] Hook 是同步还是异步？（从测试观察：Claude 打印响应文本后才执行 hook）
+## 3. Rodio 在 macOS 上的表现 ✅
 
-## 3. Rodio 在 macOS 上的表现
+- [x] 播放正常，默认输出设备选择正确
+- [x] 从内存解码 WAV 延迟可接受（< 100ms）
+- [ ] 蓝牙耳机回退场景（待测试）
 
-- [ ] `rodio` 默认输出设备选择是否正确
-- [ ] 是否需要处理蓝牙耳机未连接时的回退
-- [ ] 播放 WAV 内存数据的延迟和 CPU 开销
+## 4. 音效素材
 
-## 4. Claude Code 没有安装时的行为
+- [x] 占位合成音效已生成
+- [ ] 替换为真实屁声
 
-- [ ] `codefart setup` 如果没有检测到 `~/.claude/` 目录的处理策略
+## 5. 已知问题
 
-## 5. 音效素材
-
-- [ ] 5 个屁声音效的来源和版权确认
+- macOS 上 `dirs::config_dir()` 返回 `~/Library/Application Support/`，已变更为固定使用 `~/.config/codefart/`
