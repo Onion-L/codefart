@@ -31,10 +31,11 @@
 
 ## Phase 3: 发布
 
-- [ ] `Cargo.toml` 填好 metadata（author, repo, description）
-- [ ] GitHub Release 编译流水线（macOS arm64 + x86_64）
-- [ ] Homebrew formula
-- [ ] README.md
+- [x] `Cargo.toml` 填好 metadata（author, repo, description）
+- [x] GitHub Release 编译流水线（macOS arm64 + x86_64）
+- [x] Homebrew formula
+- [x] README.md
+- [x] install.sh 一键安装脚本
 - [ ] 15 秒 demo gif
 
 ## Phase 4: 后续
