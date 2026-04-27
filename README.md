@@ -28,9 +28,10 @@ You → claude "write a function"
 ```bash
 codefart play                     # Play current sound
 codefart list                     # List built-in themes
-codefart theme thunder            # Switch theme
+codefart theme wet                # Switch theme
 codefart set-sound ~/boom.mp3     # Use your own sound
 codefart reset                    # Back to default
+codefart update                   # Update to latest version
 codefart run -- npm run build     # Wrap any command
 ```
 

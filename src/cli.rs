@@ -34,6 +34,9 @@ pub enum Commands {
     /// Install the Stop hook into Claude Code settings
     Setup,
 
+    /// Update codefart to the latest version
+    Update,
+
     /// Run a command and play a sound when it finishes
     Run {
         /// The command and its arguments (after --)

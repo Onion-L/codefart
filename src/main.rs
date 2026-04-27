@@ -4,6 +4,7 @@ mod config;
 mod error;
 mod runner;
 mod setup;
+mod update;
 
 use std::process;
 
@@ -21,6 +22,7 @@ fn main() {
         Commands::SetSound { path } => cmd_set_sound(&path),
         Commands::Reset => cmd_reset(),
         Commands::Setup => cmd_setup(),
+        Commands::Update => cmd_update(),
         Commands::Run { args } => cmd_run(&args),
     };
 
@@ -116,6 +118,12 @@ fn cmd_setup() -> Result<(), error::CodefartError> {
         }
         Err(e) => return Err(e),
     }
+    Ok(())
+}
+
+fn cmd_update() -> Result<(), error::CodefartError> {
+    let path = update::update()?;
+    println!("✓ Updated to latest version: {}", path);
     Ok(())
 }
 
