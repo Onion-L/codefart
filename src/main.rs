@@ -2,6 +2,7 @@ mod audio;
 mod cli;
 mod config;
 mod error;
+mod runner;
 mod setup;
 
 use std::process;
@@ -20,6 +21,7 @@ fn main() {
         Commands::SetSound { path } => cmd_set_sound(&path),
         Commands::Reset => cmd_reset(),
         Commands::Setup => cmd_setup(),
+        Commands::Run { args } => cmd_run(&args),
     };
 
     match result {
@@ -114,5 +116,30 @@ fn cmd_setup() -> Result<(), error::CodefartError> {
         }
         Err(e) => return Err(e),
     }
+    Ok(())
+}
+
+fn cmd_run(args: &[String]) -> Result<(), error::CodefartError> {
+    if args.is_empty() {
+        return Err(error::CodefartError::Other(
+            "usage: codefart run -- <command> [args...]".into(),
+        ));
+    }
+
+    let cmd = &args[0];
+    let cmd_args = &args[1..];
+
+    let status = runner::run_command(cmd, cmd_args)?;
+
+    // Play sound regardless of exit code (audio errors are silent)
+    let config = Config::load().unwrap_or_default();
+    let _ = audio::play_sound(&config);
+
+    // Forward the command's exit code
+    let code = runner::status_to_code(status);
+    if code != 0 {
+        process::exit(code);
+    }
+
     Ok(())
 }

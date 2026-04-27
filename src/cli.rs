@@ -33,4 +33,11 @@ pub enum Commands {
 
     /// Install the Stop hook into Claude Code settings
     Setup,
+
+    /// Run a command and play a sound when it finishes
+    Run {
+        /// The command and its arguments (after --)
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true, num_args = 1..)]
+        args: Vec<String>,
+    },
 }
