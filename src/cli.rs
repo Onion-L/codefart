@@ -31,6 +31,9 @@ pub enum Commands {
     /// Reset to default theme (classic), clear custom sound
     Reset,
 
+    /// Remove custom sound, fall back to theme
+    Remove,
+
     /// Install the Stop hook into Claude Code settings
     Setup,
 

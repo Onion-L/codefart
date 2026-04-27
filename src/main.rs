@@ -21,6 +21,7 @@ fn main() {
         Commands::Theme { name } => cmd_theme(&name),
         Commands::SetSound { path } => cmd_set_sound(&path),
         Commands::Reset => cmd_reset(),
+        Commands::Remove => cmd_remove(),
         Commands::Setup => cmd_setup(),
         Commands::Update => cmd_update(),
         Commands::Run { args } => cmd_run(&args),
@@ -135,6 +136,14 @@ fn cmd_set_sound(path: &str) -> Result<(), error::CodefartError> {
     config.custom_sound = Some(path.to_string());
     config.save()?;
     println!("Custom sound set to {}", path);
+    Ok(())
+}
+
+fn cmd_remove() -> Result<(), error::CodefartError> {
+    let mut config = Config::load()?;
+    config.custom_sound = None;
+    config.save()?;
+    println!("Custom sound removed. Using theme: {}", config.active_theme());
     Ok(())
 }
 
