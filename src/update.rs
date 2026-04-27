@@ -57,13 +57,26 @@ pub fn update() -> Result<String, CodefartError> {
     }
 
     // Replace current binary
-    fs::rename(&new_binary, &current_exe).map_err(|e| {
-        CodefartError::Other(format!(
-            "cannot replace {}: {}. Try running with sudo.",
-            current_exe.display(),
-            e
-        ))
-    })?;
+    if let Err(e) = fs::rename(&new_binary, &current_exe) {
+        if e.kind() == io::ErrorKind::PermissionDenied {
+            // Retry with sudo
+            let status = Command::new("sudo")
+                .arg("mv")
+                .arg(&new_binary)
+                .arg(&current_exe)
+                .status()
+                .map_err(|e| CodefartError::Other(format!("sudo failed: {}", e)))?;
+            if !status.success() {
+                return Err(CodefartError::Other("sudo mv failed".into()));
+            }
+        } else {
+            return Err(CodefartError::Other(format!(
+                "cannot replace {}: {}",
+                current_exe.display(),
+                e
+            )));
+        }
+    }
 
     Ok(current_exe.display().to_string())
 }

@@ -1,6 +1,6 @@
 [package]
 name = "codefart"
-version = "0.2.0"
+version = "0.2.2"
 edition = "2024"
 description = "💨 Play a sound when your AI finishes thinking"
 repository = "https://github.com/Onion-L/codefart"
