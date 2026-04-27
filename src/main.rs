@@ -23,6 +23,7 @@ fn main() {
         Commands::Reset => cmd_reset(),
         Commands::Remove => cmd_remove(),
         Commands::Setup => cmd_setup(),
+        Commands::Preview { name } => cmd_preview(&name),
         Commands::Update => cmd_update(),
         Commands::Run { args } => cmd_run(&args),
     };
@@ -184,6 +185,14 @@ fn cmd_update() -> Result<(), error::CodefartError> {
     let path = update::update()?;
     println!("✓ Updated to latest version: {}", path);
     Ok(())
+}
+
+fn cmd_preview(name: &str) -> Result<(), error::CodefartError> {
+    if !Config::is_valid_theme(name) {
+        return Err(error::CodefartError::UnknownTheme(name.to_string()));
+    }
+    println!("Previewing {}...", name);
+    audio::play_theme(name)
 }
 
 fn cmd_run(args: &[String]) -> Result<(), error::CodefartError> {

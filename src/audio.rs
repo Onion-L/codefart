@@ -35,6 +35,31 @@ fn resolve_sound(config: &Config) -> Result<Vec<u8>, CodefartError> {
         .ok_or_else(|| CodefartError::UnknownTheme(theme.to_string()))
 }
 
+/// Play a specific built-in theme by name (ignores config).
+pub fn play_theme(theme: &str) -> Result<(), CodefartError> {
+    let filename = format!("{}.wav", theme);
+    let audio_data = SoundAssets::get(&filename)
+        .map(|f| f.data.to_vec())
+        .ok_or_else(|| CodefartError::UnknownTheme(theme.to_string()))?;
+
+    let (_stream, stream_handle) =
+        OutputStream::try_default().map_err(|e| {
+            CodefartError::AudioPlayback(format!("no audio device: {}", e))
+        })?;
+
+    let cursor = Cursor::new(audio_data);
+    let source = Decoder::new(cursor).map_err(|e| {
+        CodefartError::AudioPlayback(format!("failed to decode audio: {}", e))
+    })?;
+
+    let sink = Sink::try_new(&stream_handle).map_err(|e| {
+        CodefartError::AudioPlayback(format!("failed to create sink: {}", e))
+    })?;
+    sink.append(source);
+    sink.sleep_until_end();
+    Ok(())
+}
+
 /// Play the configured sound. Blocks until playback completes.
 /// Errors are returned but callers may choose to swallow them (silent fail).
 pub fn play_sound(config: &Config) -> Result<(), CodefartError> {
