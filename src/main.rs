@@ -125,15 +125,29 @@ fn select_theme_interactive() -> Result<String, error::CodefartError> {
 fn cmd_set_sound(path: &str) -> Result<(), error::CodefartError> {
     // Expand ~ in path
     let expanded = shellexpand::tilde(path);
-    let expanded_path = expanded.as_ref();
+    let source = std::path::Path::new(expanded.as_ref());
 
-    // Validate file exists
-    if !std::path::Path::new(expanded_path).exists() {
+    if !source.exists() {
         return Err(error::CodefartError::SoundFileNotFound(path.to_string()));
     }
 
+    // Copy to managed sounds directory
+    let sounds_dir = Config::sounds_dir();
+    std::fs::create_dir_all(&sounds_dir)
+        .map_err(|e| error::CodefartError::Other(format!("cannot create sounds dir: {}", e)))?;
+
+    let filename = source
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("custom");
+    let dest = sounds_dir.join(filename);
+    std::fs::copy(source, &dest).map_err(|e| {
+        error::CodefartError::Other(format!("cannot copy sound file: {}", e))
+    })?;
+
+    let stored_path = dest.to_string_lossy().to_string();
     let mut config = Config::load()?;
-    config.custom_sound = Some(path.to_string());
+    config.custom_sound = Some(stored_path);
     config.save()?;
     println!("Custom sound set to {}", path);
     Ok(())
@@ -143,6 +157,13 @@ fn cmd_remove() -> Result<(), error::CodefartError> {
     let mut config = Config::load()?;
     config.custom_sound = None;
     config.save()?;
+
+    // Clean up managed sounds
+    let sounds_dir = Config::sounds_dir();
+    if sounds_dir.exists() {
+        let _ = std::fs::remove_dir_all(&sounds_dir);
+    }
+
     println!("Custom sound removed. Using theme: {}", config.active_theme());
     Ok(())
 }

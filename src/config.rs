@@ -20,6 +20,12 @@ pub struct Config {
 }
 
 impl Config {
+    /// Path to the managed sounds directory: ~/.config/codefart/sounds/
+    pub fn sounds_dir() -> PathBuf {
+        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+        home.join(".config").join("codefart").join("sounds")
+    }
+
     /// Path to the config file: ~/.config/codefart/config.toml
     pub fn config_path() -> PathBuf {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
