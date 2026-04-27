@@ -2,19 +2,20 @@
 
 *Your AI finished thinking. It will let you know — loudly.*
 
-CodeFart plays a sound notification when Claude Code finishes responding. Built on Claude's native hook system — zero wrapping, zero interception.
+CodeFart plays a fart sound when Claude Code finishes responding. Built on Claude's native hook system — zero wrapping, zero interception, zero trust issues.
 
 ## Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash
+codefart setup
 ```
 
-That's it. One command installs the binary, registers the Claude hook, and you're done.
+Install the binary, then one command to enable Claude notifications. Done.
 
 ## How it works
 
-CodeFart uses Claude Code's built-in [Stop hook](https://docs.anthropic.com/en/docs/claude-code/hooks). Claude itself calls `codefart play` — CodeFart never touches your Claude process.
+CodeFart uses Claude Code's built-in [Stop hook](https://docs.anthropic.com/en/docs/claude-code/hooks). Claude itself calls `codefart play` — CodeFart never touches your Claude process, stdin, stdout, or stderr.
 
 ```
 You → claude "write a function"
@@ -26,13 +27,16 @@ You → claude "write a function"
 ## Usage
 
 ```bash
-codefart play                     # Play current sound
-codefart list                     # List built-in themes
-codefart theme wet                # Switch theme
-codefart set-sound ~/boom.mp3     # Use your own sound
-codefart reset                    # Back to default
-codefart update                   # Update to latest version
-codefart run -- npm run build     # Wrap any command
+codefart setup                   # Enable Claude notifications (once)
+codefart play                    # Play current sound
+codefart list                    # List themes, show current
+codefart theme                   # Interactive theme picker
+codefart theme classic           # Switch directly
+codefart set-sound ~/boom.mp3    # Use custom audio file
+codefart remove                  # Remove custom sound, back to theme
+codefart reset                   # Reset everything to default
+codefart update                  # Self-update to latest release
+codefart run -- npm run build    # Wrap any command, fart when done
 ```
 
 ## Built-in themes
@@ -44,11 +48,21 @@ codefart run -- npm run build     # Wrap any command
 
 Add your own with `codefart set-sound <path>`.
 
+## Update
+
+```bash
+codefart update
+```
+
+Pulls the latest release and replaces itself. Auto-elevates with sudo when needed.
+
 ## Uninstall
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/uninstall.sh | bash
 ```
+
+Removes the binary, config, and Claude hook.
 
 ## License
 
