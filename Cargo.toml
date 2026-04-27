@@ -2,9 +2,11 @@
 name = "codefart"
 version = "0.1.0"
 edition = "2024"
-description = "Play a sound when your AI finishes thinking"
+description = "💨 Play a sound when your AI finishes thinking"
 repository = "https://github.com/Onion-L/codefart"
 license = "MIT"
+authors = ["Onion-L"]
+readme = "README.md"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }

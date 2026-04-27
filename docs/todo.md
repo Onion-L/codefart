@@ -23,9 +23,9 @@
 - [x] 实现 `setup.rs`：读写 `~/.claude/settings.json`，注入 Stop hook
 - [x] Claude hook 集成端到端验证通过
 
-## Phase 2: 附加
+## Phase 2: 附加 ✅
 
-- [ ] 实现 `runner.rs`：`codefart run -- <cmd>` 通用命令包装
+- [x] 实现 `runner.rs`：`codefart run -- <cmd>` 通用命令包装
 - [x] 自定义音效文件的格式校验（存在 + 可读）
 - [x] 路径 `~` 展开
 
