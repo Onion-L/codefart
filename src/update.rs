@@ -21,23 +21,13 @@ pub fn update() -> Result<String, CodefartError> {
     let tmp_dir = tempfile::tempdir()
         .map_err(|e| CodefartError::Other(format!("cannot create temp dir: {}", e)))?;
 
-    let tarball_path = tmp_dir.path().join("codefart.tar.gz");
-    download_file(&release_url, &tarball_path)?;
+    let archive_path = tmp_dir.path().join(archive_name(target));
+    download_file(&release_url, &archive_path)?;
 
     // Extract
-    let status = Command::new("tar")
-        .arg("xzf")
-        .arg(&tarball_path)
-        .arg("-C")
-        .arg(tmp_dir.path())
-        .status()
-        .map_err(|e| CodefartError::Other(format!("tar failed: {}", e)))?;
+    extract_archive(&archive_path, tmp_dir.path())?;
 
-    if !status.success() {
-        return Err(CodefartError::Other("tar extraction failed".into()));
-    }
-
-    let new_binary = tmp_dir.path().join("codefart");
+    let new_binary = tmp_dir.path().join(binary_name());
     if !new_binary.exists() {
         return Err(CodefartError::Other(
             "downloaded archive does not contain codefart binary".into(),
@@ -57,25 +47,49 @@ pub fn update() -> Result<String, CodefartError> {
     }
 
     // Replace current binary
-    if let Err(e) = fs::rename(&new_binary, &current_exe) {
-        if e.kind() == io::ErrorKind::PermissionDenied {
-            // Retry with sudo
-            let status = Command::new("sudo")
-                .arg("mv")
-                .arg(&new_binary)
-                .arg(&current_exe)
-                .status()
-                .map_err(|e| CodefartError::Other(format!("sudo failed: {}", e)))?;
-            if !status.success() {
-                return Err(CodefartError::Other("sudo mv failed".into()));
+    #[cfg(unix)]
+    {
+        if let Err(e) = fs::rename(&new_binary, &current_exe) {
+            if e.kind() == io::ErrorKind::PermissionDenied {
+                // Retry with sudo
+                let status = Command::new("sudo")
+                    .arg("mv")
+                    .arg(&new_binary)
+                    .arg(&current_exe)
+                    .status()
+                    .map_err(|e| CodefartError::Other(format!("sudo failed: {}", e)))?;
+                if !status.success() {
+                    return Err(CodefartError::Other("sudo mv failed".into()));
+                }
+            } else {
+                return Err(CodefartError::Other(format!(
+                    "cannot replace {}: {}",
+                    current_exe.display(),
+                    e
+                )));
             }
-        } else {
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        let old_exe = current_exe.with_extension("exe.old");
+        let _ = fs::remove_file(&old_exe);
+        fs::rename(&current_exe, &old_exe).map_err(|e| {
+            CodefartError::Other(format!(
+                "cannot rename current exe: {}",
+                e
+            ))
+        })?;
+        if let Err(e) = fs::rename(&new_binary, &current_exe) {
+            let _ = fs::rename(&old_exe, &current_exe);
             return Err(CodefartError::Other(format!(
                 "cannot replace {}: {}",
                 current_exe.display(),
                 e
             )));
         }
+        let _ = fs::remove_file(&old_exe);
     }
 
     Ok(current_exe.display().to_string())
@@ -98,15 +112,73 @@ fn detect_target() -> &'static str {
     {
         "x86_64-unknown-linux-gnu"
     }
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+    {
+        "x86_64-pc-windows-msvc"
+    }
     #[cfg(not(any(
         all(target_os = "macos", target_arch = "aarch64"),
         all(target_os = "macos", target_arch = "x86_64"),
         all(target_os = "linux", target_arch = "aarch64"),
-        all(target_os = "linux", target_arch = "x86_64")
+        all(target_os = "linux", target_arch = "x86_64"),
+        all(target_os = "windows", target_arch = "x86_64")
     )))]
     {
         "unsupported"
     }
+}
+
+fn archive_name(target: &str) -> String {
+    if target.contains("windows") {
+        "codefart.zip".into()
+    } else {
+        "codefart.tar.gz".into()
+    }
+}
+
+fn binary_name() -> &'static str {
+    #[cfg(windows)]
+    {
+        "codefart.exe"
+    }
+    #[cfg(not(windows))]
+    {
+        "codefart"
+    }
+}
+
+fn extract_archive(archive: &std::path::Path, dest: &std::path::Path) -> Result<(), CodefartError> {
+    #[cfg(unix)]
+    {
+        let status = Command::new("tar")
+            .arg("xzf")
+            .arg(archive)
+            .arg("-C")
+            .arg(dest)
+            .status()
+            .map_err(|e| CodefartError::Other(format!("tar failed: {}", e)))?;
+        if !status.success() {
+            return Err(CodefartError::Other("tar extraction failed".into()));
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        let status = Command::new("powershell")
+            .arg("-Command")
+            .arg(format!(
+                "Expand-Archive -Path '{}' -DestinationPath '{}' -Force",
+                archive.display(),
+                dest.display()
+            ))
+            .status()
+            .map_err(|e| CodefartError::Other(format!("Expand-Archive failed: {}", e)))?;
+        if !status.success() {
+            return Err(CodefartError::Other("zip extraction failed".into()));
+        }
+    }
+
+    Ok(())
 }
 
 fn get_latest_release_url(target: &str) -> Result<String, CodefartError> {
@@ -132,7 +204,12 @@ fn get_latest_release_url(target: &str) -> Result<String, CodefartError> {
         .as_array()
         .ok_or_else(|| CodefartError::Other("no assets in release".into()))?;
 
-    let filename = format!("codefart-{}.tar.gz", target);
+    let filename = if target.contains("windows") {
+        format!("codefart-{}.zip", target)
+    } else {
+        format!("codefart-{}.tar.gz", target)
+    };
+
     for asset in assets {
         if asset["name"].as_str() == Some(&filename) {
             return asset["browser_download_url"]
