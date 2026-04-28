@@ -5,14 +5,34 @@ REPO="Onion-L/codefart"
 BIN_NAME="codefart"
 INSTALL_DIR="/usr/local/bin"
 
-# Detect architecture
+# Detect OS and architecture
+OS=$(uname -s)
 ARCH=$(uname -m)
-case "$ARCH" in
-    arm64|aarch64) TARGET="aarch64-apple-darwin" ;;
-    x86_64)        TARGET="x86_64-apple-darwin" ;;
+
+case "$OS" in
+    Darwin)
+        case "$ARCH" in
+            arm64|aarch64) TARGET="aarch64-apple-darwin" ;;
+            x86_64)        TARGET="x86_64-apple-darwin" ;;
+            *)
+                echo "Error: unsupported architecture on macOS: $ARCH"
+                exit 1
+                ;;
+        esac
+        ;;
+    Linux)
+        case "$ARCH" in
+            arm64|aarch64) TARGET="aarch64-unknown-linux-gnu" ;;
+            x86_64)        TARGET="x86_64-unknown-linux-gnu" ;;
+            *)
+                echo "Error: unsupported architecture on Linux: $ARCH"
+                exit 1
+                ;;
+        esac
+        ;;
     *)
-        echo "Error: unsupported architecture: $ARCH"
-        echo "CodeFart currently supports macOS arm64 and x86_64."
+        echo "Error: unsupported OS: $OS"
+        echo "CodeFart currently supports macOS and Linux."
         exit 1
         ;;
 esac
