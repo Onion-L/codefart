@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeFart — Your AI finished thinking.</title>
+<style>
+  :root {
+    --bg: #08080a;
+    --surface: #111115;
+    --border: #222228;
+    --text: #e4e4e7;
+    --muted: #71717a;
+    --accent: #c4a35a;
+    --accent-glow: #c4a35a40;
+    --code-bg: #0e0e12;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @font-face {
+    font-family: 'Editorial';
+    src: local('Georgia'), local('Times New Roman');
+    font-weight: 700;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 9999;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* Nav */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    background: rgba(8,8,10,0.8);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent);
+    color: var(--bg) !important;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px !important;
+    transition: box-shadow 0.2s;
+  }
+  .nav-cta:hover { box-shadow: 0 0 20px var(--accent-glow); }
+
+  /* Hero */
+  .hero {
+    padding: 160px 0 80px;
+    text-align: center;
+    position: relative;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 4px 16px 4px 8px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s ease-out;
+  }
+  .hero-badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .hero h1 {
+    font-family: 'Editorial', Georgia, 'Times New Roman', serif;
+    font-size: clamp(40px, 8vw, 80px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease-out 0.1s both;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+    position: relative;
+  }
+  .hero h1 em::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+    opacity: 0.4;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+    animation: fadeUp 0.6s ease-out 0.2s both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Install command */
+  .install-block {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease-out 0.3s both;
+  }
+  .install-block code {
+    padding: 14px 20px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 14px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .install-block .copy-btn {
+    background: var(--surface);
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--muted);
+    padding: 14px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .install-block .copy-btn:hover { color: var(--text); background: var(--border); }
+  .install-block .copy-btn.copied { color: #22c55e; }
+
+  .hero-hint {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    animation: fadeUp 0.6s ease-out 0.35s both;
+  }
+
+  /* How it works */
+  .section {
+    padding: 80px 0;
+  }
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .section h2 {
+    font-family: 'Editorial', Georgia, 'Times New Roman', serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .section > p {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 560px;
+    margin-bottom: 48px;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 40px 0;
+  }
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    text-align: center;
+    min-width: 140px;
+  }
+  .flow-step .icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .flow-step .label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .flow-step .value {
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .flow-arrow {
+    color: var(--muted);
+    font-size: 20px;
+  }
+  .flow-step.highlight {
+    border-color: var(--accent);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+
+  /* Feature grid */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .feature {
+    background: var(--surface);
+    padding: 28px;
+  }
+  .feature-icon { font-size: 22px; margin-bottom: 12px; }
+  .feature h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .feature p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* Commands table */
+  .commands {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .command-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+  }
+  .command-row:last-child { border-bottom: none; }
+  .command-row code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    white-space: nowrap;
+    min-width: 200px;
+  }
+  .command-row span {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* Themes */
+  .themes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .theme-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .theme-card .sound-icon { font-size: 24px; }
+  .theme-card h4 { font-size: 15px; font-weight: 600; }
+  .theme-card p { font-size: 12px; color: var(--muted); }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    padding: 100px 0;
+  }
+  .cta h2 {
+    font-family: 'Editorial', Georgia, 'Times New Roman', serif;
+    font-size: clamp(28px, 5vw, 44px);
+    margin-bottom: 16px;
+  }
+  .cta p { color: var(--muted); margin-bottom: 32px; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 120px 0 60px; }
+    .flow { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); }
+    .command-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .command-row code { min-width: auto; }
+    .nav-links a:not(.nav-cta) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Code<span>Fart</span></a>
+  <div class="nav-links">
+    <a href="#how">How</a>
+    <a href="#usage">Usage</a>
+    <a href="https://github.com/Onion-L/codefart" target="_blank">GitHub</a>
+    <a href="#install" class="nav-cta">Install</a>
+  </div>
+</nav>
+
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Now playing: fart-01.mp3
+      </div>
+      <h1>Your AI finished<br>thinking. <em>It will let you know.</em></h1>
+      <p>CodeFart plays a sound when Claude Code finishes responding. Built on native hooks. Zero wrapping, zero trust issues. One command to install.</p>
+      <div class="install-block" id="install">
+        <code>curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash</code>
+        <button class="copy-btn" onclick="copyInstall()" id="copyBtn">Copy</button>
+      </div>
+      <p class="hero-hint">Then run <code>codefart setup</code> to enable Claude notifications.</p>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section reveal" id="how">
+    <div class="container">
+      <div class="section-label">How it works</div>
+      <h2>No wrappers. No aliases.<br>No trust issues.</h2>
+      <p>CodeFart uses Claude Code's built-in Stop hook. Claude itself calls codefart — we never touch your process, your stdin, or your stdout.</p>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="icon">💬</div>
+          <div class="label">You type</div>
+          <div class="value">claude "…"</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="icon">🧠</div>
+          <div class="label">Claude thinks</div>
+          <div class="value">…</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="icon">✅</div>
+          <div class="label">Response ready</div>
+          <div class="value">Hook fires</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step highlight">
+          <div class="icon">💨</div>
+          <div class="label">CodeFart plays</div>
+          <div class="value">You hear it</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section reveal">
+    <div class="container">
+      <div class="section-label">Why CodeFart</div>
+      <h2>Delightfully unnecessary.<br>Impossibly useful.</h2>
+      <p>Every other notification tool is boring. This one makes you smile — and you'll actually tell your friends about it.</p>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <h3>One command install</h3>
+          <p>curl | bash. That's it. Then codefart setup to enable Claude notifications. Under 60 seconds.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔊</div>
+          <h3>Real fart sounds</h3>
+          <p>classic and wet themes built in. Add your own with codefart set-sound. Preview before you commit.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🛡️</div>
+          <h3>Zero trust issues</h3>
+          <p>No process wrapping. No alias trickery. Claude's own hook system calls codefart. Check ~/.claude/settings.json yourself.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔄</div>
+          <h3>Self-updating</h3>
+          <p>codefart update pulls the latest release. Auto-elevates with sudo when needed. Never think about it again.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎨</div>
+          <h3>Interactive theme picker</h3>
+          <p>Arrow keys to browse themes, Enter to select. Preview mode lets you audition without switching.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">📦</div>
+          <h3>Universal wrapper</h3>
+          <p>codefart run -- npm run build. Wrap any command. Fart when it's done. Stupidly practical.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Usage -->
+  <section class="section reveal" id="usage">
+    <div class="container">
+      <div class="section-label">Usage</div>
+      <h2>Commands you'll actually use.</h2>
+      <p>Every action is a single command. No config files to edit.</p>
+      <div class="commands">
+        <div class="command-row"><code>codefart setup</code><span>Enable Claude notifications (once)</span></div>
+        <div class="command-row"><code>codefart play</code><span>Play current sound</span></div>
+        <div class="command-row"><code>codefart list</code><span>List themes, show current</span></div>
+        <div class="command-row"><code>codefart theme</code><span>Interactive theme picker ↑↓ Enter</span></div>
+        <div class="command-row"><code>codefart theme classic</code><span>Switch directly</span></div>
+        <div class="command-row"><code>codefart preview</code><span>Audition themes without switching</span></div>
+        <div class="command-row"><code>codefart set-sound ~/boom.mp3</code><span>Use custom audio file</span></div>
+        <div class="command-row"><code>codefart remove</code><span>Remove custom sound</span></div>
+        <div class="command-row"><code>codefart reset</code><span>Reset to defaults</span></div>
+        <div class="command-row"><code>codefart update</code><span>Self-update to latest release</span></div>
+        <div class="command-row"><code>codefart run -- npm run build</code><span>Wrap any command</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Themes -->
+  <section class="section reveal">
+    <div class="container">
+      <div class="section-label">Sound themes</div>
+      <h2>Curated. Named. Shareable.</h2>
+      <p>Each theme has a personality. The names are part of the product.</p>
+      <div class="themes">
+        <div class="theme-card">
+          <div class="sound-icon">💨</div>
+          <div>
+            <h4>classic</h4>
+            <p>The signature CodeFart sound</p>
+          </div>
+        </div>
+        <div class="theme-card">
+          <div class="sound-icon">💦</div>
+          <div>
+            <h4>wet</h4>
+            <p>A wetter, more dramatic variant</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta reveal">
+    <div class="container">
+      <h2>You'll never miss a response again.</h2>
+      <p>And you'll smile every time.</p>
+      <div class="install-block">
+        <code>curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash</code>
+        <button class="copy-btn" onclick="copyInstall()">Copy</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="container">
+  <span>CodeFart · MIT</span>
+  <a href="https://github.com/Onion-L/codefart" target="_blank">GitHub →</a>
+</footer>
+
+<script>
+  function copyInstall() {
+    const code = 'curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash';
+    navigator.clipboard.writeText(code).then(() => {
+      const btns = document.querySelectorAll('.copy-btn');
+      btns.forEach(b => { b.textContent = 'Copied!'; b.classList.add('copied'); });
+      setTimeout(() => {
+        btns.forEach(b => { b.textContent = 'Copy'; b.classList.remove('copied'); });
+      }, 2000);
+    });
+  }
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
