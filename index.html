@@ -3,461 +3,390 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeFart — Your AI finished thinking.</title>
+<title>CodeFart 💨</title>
 <meta name="description" content="A CLI tool that plays a fart sound when Claude Code finishes responding.">
-<meta property="og:title" content="CodeFart 💨">
-<meta property="og:description" content="Your AI finished thinking. It will let you know — loudly.">
+<meta property="og:title" content="CodeFart — Your AI finished thinking.">
+<meta property="og:description" content="It will let you know. Loudly.">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400..700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Gaegu:wght@400;700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --yellow: #f0c040;
-    --pink: #e8788a;
-    --bg: #0f0f17;
-    --surface: #171725;
-    --surface-hover: #1e1e32;
-    --border: #252538;
-    --text: #f0f0f5;
-    --muted: #8888a8;
-    --radius-sm: 10px;
-    --radius-lg: 18px;
-    --radius-full: 999px;
-    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --cream: #fffbeb;
+    --text: #1a1410;
+    --orange: #f05a28;
+    --pink: #ff7eb3;
+    --purple: #7c3aed;
+    --green: #10b981;
+    --cloud: #fef3c7;
+    --rough: 4px;
   }
 
   body {
-    background: var(--bg);
+    background: var(--cream);
     color: var(--text);
-    font-family: 'Fredoka', system-ui, sans-serif;
-    line-height: 1.5;
-    overflow-x: hidden;
-    background-image:
-      radial-gradient(ellipse 600px 400px at 15% 10%, rgba(240,192,64,0.04) 0%, transparent 100%),
-      radial-gradient(ellipse 400px 500px at 85% 60%, rgba(232,120,138,0.03) 0%, transparent 100%);
+    font-family: 'Gaegu', 'Comic Sans MS', cursive, sans-serif;
+    font-size: 20px;
+    line-height: 1.55;
+    scroll-behavior: smooth;
+    cursor: default;
   }
 
-  /* Noise */
-  body::after {
+  /* Scribble border utility */
+  .scribble {
+    border: 3px solid var(--text);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  }
+
+  .scribble-sm {
+    border: 2px solid var(--text);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  }
+
+  /* Animated fart clouds */
+  .clouds {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .cloud {
+    position: absolute; opacity: 0.12;
+    animation: drift linear infinite;
+  }
+  @keyframes drift {
+    0% { transform: translateX(-200px) rotate(0deg); }
+    100% { transform: translateX(calc(100vw + 200px)) rotate(15deg); }
+  }
+
+  /* Content */
+  .page {
+    position: relative; z-index: 1;
+    max-width: 800px; margin: 0 auto; padding: 60px 28px 80px;
+  }
+
+  /* Comic panel */
+  .panel {
+    margin: 80px 0; position: relative;
+  }
+
+  /* Big title */
+  .mega-title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: clamp(42px, 10vw, 88px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin: 40px 0 24px;
+    transform: rotate(-1deg);
+  }
+  .mega-title em {
+    font-style: normal;
+    background: var(--orange);
+    color: #fff;
+    padding: 0 8px;
+    display: inline-block;
+    transform: rotate(2deg);
+  }
+
+  /* Speech bubble */
+  .bubble {
+    display: inline-block;
+    background: #fff;
+    border: 3px solid var(--text);
+    border-radius: 20px;
+    padding: 16px 24px;
+    position: relative;
+    font-size: 22px;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.08);
+  }
+  .bubble::after {
     content: '';
-    position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.025;
-    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    position: absolute; bottom: -18px; left: 40px;
+    width: 0; height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 18px solid var(--text);
+  }
+  .bubble::before {
+    content: '';
+    position: absolute; bottom: -13px; left: 43px;
+    width: 0; height: 0;
+    border-left: 11px solid transparent;
+    border-right: 11px solid transparent;
+    border-top: 13px solid #fff;
+    z-index: 1;
   }
 
-  .container { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+  /* Install block – handwritten feel */
+  .install-block {
+    display: inline-block;
+    background: #1a1410;
+    color: #10b981;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 16px;
+    padding: 20px 28px;
+    border-radius: 16px;
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.1);
+    position: relative;
+    transform: rotate(-0.5deg);
+  }
+  .install-block .prompt { color: #f0c040; }
+  .copy-btn {
+    display: inline-block;
+    margin-top: 14px;
+    background: var(--orange);
+    color: #fff;
+    border: none;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 99px;
+    cursor: pointer;
+    transform: rotate(1deg);
+    transition: transform 0.15s;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+  }
+  .copy-btn:hover { transform: rotate(-1deg) scale(1.05); }
+  .copy-btn:active { transform: scale(0.95); box-shadow: none; }
+  .copy-btn:focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; }
 
-  /* Skip link */
-  .skip-link {
-    position: absolute; top: -100px; left: 16px; background: var(--yellow); color: var(--bg);
-    padding: 8px 16px; border-radius: 6px; font-weight: 600; z-index: 10000; transition: top 0.2s;
+  /* Feature balloons */
+  .balloons {
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
   }
-  .skip-link:focus { top: 16px; }
+  .balloon {
+    background: #fff;
+    border: 3px solid var(--text);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    padding: 24px;
+    max-width: 240px;
+    text-align: center;
+    transition: transform 0.2s;
+    box-shadow: 5px 5px 0 rgba(0,0,0,0.06);
+  }
+  .balloon:hover { transform: translateY(-6px) rotate(2deg); }
+  .balloon .icon { font-size: 40px; display: block; margin-bottom: 10px; }
+  .balloon h3 { font-family: 'Fredoka', sans-serif; font-size: 18px; margin-bottom: 6px; }
+  .balloon p { font-size: 16px; opacity: 0.7; }
 
-  /* Nav */
-  nav {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 28px; position: sticky; top: 0; z-index: 100;
-    backdrop-filter: blur(16px); background: rgba(15,15,23,0.82);
-    border-bottom: 1px solid var(--border);
+  /* Sticky notes for commands */
+  .sticky-grid {
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
   }
-  .logo {
-    font-size: 22px; font-weight: 700; color: var(--text); text-decoration: none; letter-spacing: -0.02em;
+  .sticky {
+    background: #fef9c3;
+    border: 2px solid rgba(0,0,0,0.1);
+    padding: 16px 20px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.08);
+    transform: rotate(var(--rot, 1deg));
+    font-size: 16px;
+    transition: transform 0.2s;
   }
-  .logo-accent { color: var(--yellow); }
-  .nav-links { display: flex; gap: 28px; align-items: center; }
-  .nav-links a {
-    color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500;
-    transition: color 0.2s;
+  .sticky:hover { transform: rotate(0deg) scale(1.04); z-index: 2; }
+  .sticky code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    background: rgba(0,0,0,0.06);
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: 4px;
   }
-  .nav-links a:hover, .nav-links a:focus-visible { color: var(--text); outline: none; }
-  .nav-links a:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
-  .gh-link {
-    background: var(--surface); padding: 6px 16px; border-radius: var(--radius-full); color: var(--text) !important;
-    border: 1px solid var(--border); font-size: 13px !important;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .gh-link:hover, .gh-link:focus-visible { border-color: var(--yellow); background: var(--surface-hover); outline: none; }
+  .sticky .desc { display: block; opacity: 0.6; }
 
-  /* Hero */
-  .hero {
-    padding: 100px 0 80px; position: relative; z-index: 1;
-  }
-  .hero-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
-  }
-  .hero-text { max-width: 480px; }
-  .hero-pill {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(240,192,64,0.1); border: 1px solid rgba(240,192,64,0.2);
-    border-radius: var(--radius-full); padding: 4px 16px 4px 8px;
-    font-size: 13px; color: var(--yellow); margin-bottom: 28px;
-  }
-  .hero-pill-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--yellow);
-    animation: pulse-dot 2s infinite;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.3; transform: scale(1.6); }
-  }
-  .hero h1 {
-    font-size: clamp(36px, 6vw, 58px); font-weight: 700; line-height: 1.08;
-    letter-spacing: -0.03em; margin-bottom: 22px;
-  }
-  .hero h1 mark {
-    background: none; color: var(--yellow);
-    text-decoration: underline; text-decoration-thickness: 3px;
-    text-underline-offset: 6px; text-decoration-color: rgba(240,192,64,0.4);
-  }
-  .hero p {
-    font-size: 18px; color: var(--muted); max-width: 420px; margin-bottom: 36px; line-height: 1.65;
-  }
-  .hero-visual {
-    display: flex; align-items: center; justify-content: center;
-  }
-  .fart-bubble {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-    padding: 24px 28px; text-align: center; position: relative;
-    box-shadow: 0 0 60px rgba(240,192,64,0.06);
-  }
-  .fart-bubble .big-emoji { font-size: 64px; display: block; animation: float 3s ease-in-out infinite; }
-  @keyframes float {
-    0%, 100% { transform: translateY(0) rotate(-3deg); }
-    50% { transform: translateY(-12px) rotate(3deg); }
-  }
-  .fart-bubble .sub { margin-top: 8px; font-size: 13px; color: var(--muted); }
+  /* Highlight text */
+  .hl-yellow { background: #fef08a; padding: 0 4px; }
+  .hl-pink { background: #fbcfe8; padding: 0 4px; }
+  .hl-orange { background: #fed7aa; padding: 0 4px; }
 
-  /* Install */
-  .install-wrap {
-    background: #0a0a14; border: 1px solid var(--border); border-radius: var(--radius-lg);
-    display: inline-flex; align-items: center; overflow: hidden;
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 14px;
+  /* Doodle arrow */
+  .arrow-doodle {
+    display: block; text-align: center; font-size: 48px; margin: 20px 0;
+    animation: wiggle 1s ease-in-out infinite;
   }
-  .install-wrap code { padding: 15px 20px; color: #8be0a0; }
-  .install-wrap button {
-    background: var(--yellow); border: none; color: var(--bg); padding: 15px 20px;
-    font-family: 'Fredoka', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
-    transition: filter 0.15s, transform 0.1s var(--spring);
-  }
-  .install-wrap button:hover { filter: brightness(1.08); }
-  .install-wrap button:active { transform: scale(0.96); }
-  .install-wrap button.copied { background: #8be0a0; }
-  .install-wrap button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
-  .hero-hint { margin-top: 14px; font-size: 14px; color: var(--muted); }
-  .hero-hint code {
-    background: var(--surface); padding: 2px 8px; border-radius: 4px; font-size: 13px; color: var(--pink);
+  @keyframes wiggle {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(6px); }
+    75% { transform: translateX(-6px); }
   }
 
-  /* Section */
-  .section { padding: 90px 0; position: relative; z-index: 1; }
-  .section-header { margin-bottom: 56px; }
-  .section-badge {
-    display: inline-block; background: var(--surface); color: var(--yellow); font-size: 13px;
-    font-weight: 600; padding: 5px 14px; border-radius: var(--radius-full); margin-bottom: 18px;
-    border: 1px solid var(--border);
-  }
-  .section h2 {
-    font-size: clamp(28px, 4.5vw, 40px); font-weight: 700; line-height: 1.18; letter-spacing: -0.02em;
-  }
-  .section > .container > p {
-    font-size: 16px; color: var(--muted); max-width: 520px; margin-top: 14px;
+  .big-number {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 72px; font-weight: 700; line-height: 1;
+    color: var(--orange); display: block;
   }
 
-  /* Flow */
-  .flow {
-    display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap;
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 32px 20px;
+  /* Fart blast */
+  .fart-blast {
+    text-align: center; font-size: 80px;
+    animation: blast 0.6s ease-out;
   }
-  .flow-step {
-    background: #1a1a2e; border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 16px 14px; text-align: center; min-width: 100px;
-    transition: transform 0.25s var(--spring), border-color 0.25s;
-  }
-  .flow-step:hover { transform: translateY(-4px); border-color: var(--yellow); }
-  .flow-step .emoj { font-size: 26px; display: block; margin-bottom: 6px; }
-  .flow-step .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
-  .flow-step .val { font-size: 13px; font-weight: 600; margin-top: 3px; }
-  .flow-arr { color: var(--yellow); font-size: 22px; font-weight: 700; margin: 0 4px; }
-  .flow-step.boom {
-    border-color: var(--yellow);
-    background: rgba(240,192,64,0.06);
-    box-shadow: 0 0 30px rgba(240,192,64,0.08);
+  @keyframes blast {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
   }
 
-  /* Feature zig-zag */
-  .feature-row {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
-    padding: 48px 0; border-bottom: 1px solid var(--border);
-  }
-  .feature-row:last-child { border-bottom: none; }
-  .feature-row:nth-child(even) .feature-img { order: -1; }
-  .feature-img {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 32px; text-align: center; font-size: 56px;
-    box-shadow: 0 0 40px rgba(240,192,64,0.04);
-    transition: box-shadow 0.3s;
-  }
-  .feature-img:hover { box-shadow: 0 0 60px rgba(240,192,64,0.1); }
-  .feature-text h3 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
-  .feature-text p { font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 380px; }
-
-  /* Command table */
-  .cmd-table {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-  .cmd-row {
-    display: flex; align-items: center; padding: 15px 22px; border-bottom: 1px solid var(--border);
-    gap: 24px; transition: background 0.15s;
-  }
-  .cmd-row:last-child { border-bottom: none; }
-  .cmd-row:hover { background: var(--surface-hover); }
-  .cmd-row code {
-    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: #8be0a0;
-    white-space: nowrap; min-width: 240px;
-  }
-  .cmd-row span { font-size: 14px; color: var(--muted); }
-
-  /* Theme cards */
-  .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 480px; }
-  .theme-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 22px; display: flex; align-items: center; gap: 16px;
-    transition: border-color 0.2s, transform 0.15s var(--spring);
-  }
-  .theme-card:hover { border-color: var(--yellow); transform: translateY(-2px); }
-  .theme-card .tc-icon { font-size: 34px; }
-  .theme-card h4 { font-size: 15px; font-weight: 600; }
-  .theme-card p { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  /* CTA */
-  .cta-section { padding: 100px 0; text-align: center; position: relative; z-index: 1; }
-  .cta-section h2 {
-    font-size: clamp(28px, 4.5vw, 40px); font-weight: 700; margin-bottom: 12px; letter-spacing: -0.02em;
-  }
-  .cta-section p { font-size: 17px; color: var(--muted); margin-bottom: 36px; }
-
-  /* Footer */
   footer {
-    border-top: 1px solid var(--border); padding: 24px 0; display: flex;
-    justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted);
+    text-align: center; padding: 60px 0 40px;
+    font-size: 16px; opacity: 0.5;
+    position: relative; z-index: 1;
   }
-  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
-  footer a:hover, footer a:focus-visible { color: var(--yellow); outline: none; }
+  footer a { color: var(--text); }
 
-  /* Scroll reveal */
-  .reveal {
-    opacity: 0; transform: translateY(28px);
-    transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .reveal.visible { opacity: 1; transform: translateY(0); }
-
-  /* Floating fart particles */
-  .particle {
-    position: fixed; pointer-events: none; z-index: 0; font-size: 22px;
-    animation: float-up 4s ease-out forwards; opacity: 0;
-  }
-  @keyframes float-up {
-    0% { opacity: 0; transform: translateY(0) scale(0.4) rotate(-10deg); }
-    15% { opacity: 0.9; }
-    100% { opacity: 0; transform: translateY(-350px) scale(1.3) rotate(30deg); }
-  }
-
-  @media (max-width: 700px) {
-    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
-    .hero-visual { order: -1; }
-    .feature-row { grid-template-columns: 1fr; gap: 28px; }
-    .feature-row:nth-child(even) .feature-img { order: 0; }
-    .flow { flex-direction: column; }
-    .flow-arr { transform: rotate(90deg); }
-    .cmd-row { flex-direction: column; align-items: flex-start; gap: 2px; }
-    .cmd-row code { min-width: auto; }
-    .install-wrap { flex-direction: column; }
-    .install-wrap button { width: 100%; }
-    .theme-grid { grid-template-columns: 1fr; }
+  @media (max-width: 600px) {
+    .page { padding: 40px 16px; }
+    .balloon { max-width: 100%; }
+    .install-block { font-size: 13px; padding: 14px 18px; }
   }
 </style>
 </head>
 <body>
 
-<a href="#main" class="skip-link">Skip to content</a>
+<div class="clouds">
+  <svg class="cloud" width="120" height="60" style="top:8%; animation-duration:35s">
+    <ellipse cx="40" cy="40" rx="35" ry="18" fill="#fef3c7"/>
+    <ellipse cx="65" cy="32" rx="25" ry="20" fill="#fef3c7"/>
+    <ellipse cx="85" cy="40" rx="30" ry="16" fill="#fef3c7"/>
+  </svg>
+  <svg class="cloud" width="100" height="50" style="top:25%; animation-duration:42s; animation-delay:8s">
+    <ellipse cx="35" cy="35" rx="30" ry="15" fill="#fee2e2"/>
+    <ellipse cx="55" cy="28" rx="22" ry="18" fill="#fee2e2"/>
+    <ellipse cx="75" cy="35" rx="25" ry="14" fill="#fee2e2"/>
+  </svg>
+  <svg class="cloud" width="90" height="45" style="top:45%; animation-duration:38s; animation-delay:15s">
+    <ellipse cx="30" cy="30" rx="25" ry="14" fill="#fef3c7"/>
+    <ellipse cx="50" cy="25" rx="20" ry="16" fill="#fef3c7"/>
+    <ellipse cx="68" cy="30" rx="22" ry="13" fill="#fef3c7"/>
+  </svg>
+  <svg class="cloud" width="110" height="55" style="top:60%; animation-duration:45s; animation-delay:3s">
+    <ellipse cx="35" cy="38" rx="32" ry="16" fill="#e0e7ff"/>
+    <ellipse cx="60" cy="30" rx="24" ry="18" fill="#e0e7ff"/>
+    <ellipse cx="82" cy="38" rx="28" ry="15" fill="#e0e7ff"/>
+  </svg>
+</div>
 
-<nav>
-  <a href="/" class="logo">💨 Code<span class="logo-accent">Fart</span></a>
-  <div class="nav-links">
-    <a href="#how">How</a>
-    <a href="#cmds">Commands</a>
-    <a href="https://github.com/Onion-L/codefart" class="gh-link" target="_blank" rel="noopener">⭐  Star on GitHub</a>
+<div class="page">
+
+  <!-- INTRO -->
+  <div class="panel" style="margin-top:20px">
+    <div class="bubble">psst — your AI is done</div>
+    <h1 class="mega-title">You walked away.<br><em>It farted.</em></h1>
+    <p style="font-size:24px; max-width:500px; margin:16px 0 32px">
+      codefart plays a sound when Claude finishes. It's the dumbest thing you'll install today — and the one you'll actually keep.
+    </p>
+
+    <div class="install-block">
+      <span class="prompt">$</span> curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash
+    </div>
+    <br>
+    <button class="copy-btn" onclick="copyCmd()">📋 copy that</button>
+    <p style="margin-top:16px; opacity:0.5; font-size:18px">then <code>codefart setup</code> → done forever</p>
   </div>
-</nav>
 
-<main id="main">
-  <section class="hero">
-    <div class="container">
-      <div class="hero-grid">
-        <div class="hero-text">
-          <div class="hero-pill"><span class="hero-pill-dot"></span>v0.2.6 · 2 farts included</div>
-          <h1>Your AI is <mark>done thinking.</mark> You'll know.</h1>
-          <p>A tiny CLI that plays a fart when Claude finishes. Zero wrappers, zero trust issues. It's stupid and it absolutely works.</p>
-          <div class="install-wrap">
-            <code>curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash</code>
-            <button onclick="copyCmd()" id="copyBtn">📋 Copy</button>
-          </div>
-          <p class="hero-hint">Then <code>codefart setup</code> to wire it into Claude</p>
-        </div>
-        <div class="hero-visual">
-          <div class="fart-bubble">
-            <span class="big-emoji">💨</span>
-            <div class="sub">BRAAAP.wav</div>
-          </div>
-        </div>
+  <div class="arrow-doodle">👇</div>
+
+  <!-- HOW -->
+  <div class="panel">
+    <span class="big-number">1.</span>
+    <h2 style="font-family:'Fredoka',sans-serif; font-size:36px; margin:8px 0 16px">
+      Claude <span class="hl-yellow">finishes thinking</span>.
+    </h2>
+    <p style="font-size:22px; max-width:500px;">Claude Code has a built-in <code>Stop</code> hook. When it's done responding, the hook fires. We put one command in there.</p>
+  </div>
+
+  <div class="panel">
+    <span class="big-number">2.</span>
+    <h2 style="font-family:'Fredoka',sans-serif; font-size:36px; margin:8px 0 16px">
+      CodeFart goes <span class="hl-pink">BRAAAP</span>.
+    </h2>
+    <p style="font-size:22px; max-width:500px;">That's it. We don't touch Claude's process. We don't read your prompts. One hook. One fart. Zero trust issues.</p>
+  </div>
+
+  <div class="fart-blast">💨</div>
+
+  <!-- FEATURES as balloons -->
+  <div class="panel">
+    <h2 style="font-family:'Fredoka',sans-serif; font-size:32px; text-align:center; margin-bottom:32px">
+      What's in the box?
+    </h2>
+    <div class="balloons">
+      <div class="balloon">
+        <span class="icon">🔊</span>
+        <h3>Real fart sounds</h3>
+        <p>classic &amp; wet built in. Add your own.</p>
+      </div>
+      <div class="balloon">
+        <span class="icon">🕹️</span>
+        <h3>Arrow key picker</h3>
+        <p>↑↓ to choose, Enter to commit, Ctrl-C to bail.</p>
+      </div>
+      <div class="balloon">
+        <span class="icon">👂</span>
+        <h3>Preview mode</h3>
+        <p>Audition sounds without switching. Try before you buy.</p>
+      </div>
+      <div class="balloon">
+        <span class="icon">🔄</span>
+        <h3>Self-updating</h3>
+        <p>codefart update. sudo when needed.</p>
+      </div>
+      <div class="balloon">
+        <span class="icon">📦</span>
+        <h3>Wrap anything</h3>
+        <p>codefart run -- npm run build</p>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="section reveal" id="how">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-badge">How</span>
-        <h2>We don't touch Claude.<br>Claude calls us.</h2>
-        <p>Claude Code has a built-in Stop hook that fires at the end of every response. We register one command. That's the whole product.</p>
-      </div>
-      <div class="flow">
-        <div class="flow-step"><span class="emoj">💬</span><span class="lbl">You</span><span class="val">claude "…"</span></div>
-        <span class="flow-arr">→</span>
-        <div class="flow-step"><span class="emoj">🧠</span><span class="lbl">Claude</span><span class="val">thinks</span></div>
-        <span class="flow-arr">→</span>
-        <div class="flow-step"><span class="emoj">🪝</span><span class="lbl">Hook fires</span><span class="val">Stop event</span></div>
-        <span class="flow-arr">→</span>
-        <div class="flow-step boom"><span class="emoj">💨</span><span class="lbl">CodeFart</span><span class="val">BRAAAP</span></div>
-      </div>
+  <!-- COMMANDS as sticky notes -->
+  <div class="panel">
+    <h2 style="font-family:'Fredoka',sans-serif; font-size:32px; text-align:center; margin-bottom:32px">
+      All the commands
+    </h2>
+    <div class="sticky-grid">
+      <div class="sticky" style="--rot:-2deg"><code>codefart setup</code><span class="desc">wire into Claude</span></div>
+      <div class="sticky" style="--rot:1.5deg"><code>codefart play</code><span class="desc">current sound</span></div>
+      <div class="sticky" style="--rot:-1deg"><code>codefart list</code><span class="desc">show themes</span></div>
+      <div class="sticky" style="--rot:2deg"><code>codefart theme</code><span class="desc">↑↓ picker</span></div>
+      <div class="sticky" style="--rot:-1.5deg"><code>codefart theme wet</code><span class="desc">switch directly</span></div>
+      <div class="sticky" style="--rot:0.5deg"><code>codefart preview</code><span class="desc">audition</span></div>
+      <div class="sticky" style="--rot:-2.5deg"><code>codefart set-sound ...</code><span class="desc">custom audio</span></div>
+      <div class="sticky" style="--rot:1deg"><code>codefart remove</code><span class="desc">clear custom</span></div>
+      <div class="sticky" style="--rot:-0.5deg"><code>codefart reset</code><span class="desc">factory</span></div>
+      <div class="sticky" style="--rot:2.5deg"><code>codefart update</code><span class="desc">get latest</span></div>
+      <div class="sticky" style="--rot:-1.8deg"><code>codefart run -- ...</code><span class="desc">wrap any cmd</span></div>
     </div>
-  </section>
+  </div>
 
-  <section class="section reveal">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Why</span>
-        <h2>Three reasons this exists.</h2>
-      </div>
-
-      <div class="feature-row">
-        <div class="feature-text">
-          <h3>You walk away. We bring you back.</h3>
-          <p>Claude takes 10–60 seconds. You switch tabs, check your phone, forget. The fart is your cue. It's the most effective notification you've ever ignored.</p>
-        </div>
-        <div class="feature-img">🚶‍♂️💨</div>
-      </div>
-
-      <div class="feature-row">
-        <div class="feature-text">
-          <h3>Not a wrapper. A hook.</h3>
-          <p>No shell aliases. No process interception. Open <code>~/.claude/settings.json</code> and you'll see exactly what we added: one Stop hook entry. That's it.</p>
-        </div>
-        <div class="feature-img">🪝</div>
-      </div>
-
-      <div class="feature-row">
-        <div class="feature-text">
-          <h3>Fun is a feature.</h3>
-          <p>Every other notification tool is boring. This one has a theme called "wet" and a preview mode with arrow keys. You'll tell your friends about it.</p>
-        </div>
-        <div class="feature-img">🎉</div>
-      </div>
+  <!-- CTA -->
+  <div class="panel" style="text-align:center">
+    <div class="bubble" style="margin-bottom:28px">you're still reading?</div>
+    <h2 style="font-family:'Fredoka',sans-serif; font-size:36px; margin-bottom:24px">
+      Just <span class="hl-orange">install it</span> already.
+    </h2>
+    <div class="install-block">
+      <span class="prompt">$</span> curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash
     </div>
-  </section>
+    <br>
+    <button class="copy-btn" onclick="copyCmd()">📋 copy that</button>
+  </div>
 
-  <section class="section reveal" id="cmds">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Commands</span>
-        <h2>One command per thing.<br>No config files.</h2>
-        <p>Everything you'd want to do with a fart notification tool.</p>
-      </div>
-      <div class="cmd-table">
-        <div class="cmd-row"><code>codefart setup</code><span>Wire into Claude (once)</span></div>
-        <div class="cmd-row"><code>codefart play</code><span>Play current sound</span></div>
-        <div class="cmd-row"><code>codefart list</code><span>Show themes, highlight current</span></div>
-        <div class="cmd-row"><code>codefart theme</code><span>Interactive picker ↑↓ Enter</span></div>
-        <div class="cmd-row"><code>codefart theme classic</code><span>Switch directly by name</span></div>
-        <div class="cmd-row"><code>codefart preview</code><span>Audition without switching</span></div>
-        <div class="cmd-row"><code>codefart set-sound ~/boom.mp3</code><span>Custom audio file</span></div>
-        <div class="cmd-row"><code>codefart remove</code><span>Clear custom sound</span></div>
-        <div class="cmd-row"><code>codefart reset</code><span>Back to factory settings</span></div>
-        <div class="cmd-row"><code>codefart update</code><span>Get the latest version</span></div>
-        <div class="cmd-row"><code>codefart run -- npm run build</code><span>Wrap any command 💨</span></div>
-      </div>
-    </div>
-  </section>
+</div>
 
-  <section class="section reveal">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-badge">Sounds</span>
-        <h2>Two farts. More coming.</h2>
-        <p>Naming things is half the fun.</p>
-      </div>
-      <div class="theme-grid">
-        <div class="theme-card">
-          <span class="tc-icon">💨</span>
-          <div><h4>classic</h4><p>The definitive experience</p></div>
-        </div>
-        <div class="theme-card">
-          <span class="tc-icon">💦</span>
-          <div><h4>wet</h4><p>Dramatically wetter</p></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="cta-section reveal">
-    <div class="container">
-      <h2>You'll never miss a response again.</h2>
-      <p>Yes, it's actually called CodeFart.</p>
-      <div class="install-wrap">
-        <code>curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash</code>
-        <button onclick="copyCmd()">📋 Copy</button>
-      </div>
-    </div>
-  </section>
-</main>
-
-<footer class="container">
-  <span>💨 CodeFart · <a href="https://github.com/Onion-L/codefart" target="_blank" rel="noopener">GitHub</a> · MIT</span>
-  <span>Made with immature humor</span>
+<footer>
+  💨 CodeFart · <a href="https://github.com/Onion-L/codefart" target="_blank" rel="noopener">GitHub</a> · MIT · Made with immature humor
 </footer>
 
 <script>
   function copyCmd() {
-    const code = 'curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash';
-    navigator.clipboard.writeText(code).then(() => {
-      document.querySelectorAll('.install-wrap button').forEach(b => { b.textContent = '✅ Copied!'; b.classList.add('copied'); });
+    navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash').then(() => {
+      document.querySelectorAll('.copy-btn').forEach(b => { b.textContent = '✅ copied!'; });
       setTimeout(() => {
-        document.querySelectorAll('.install-wrap button').forEach(b => { b.textContent = '📋 Copy'; b.classList.remove('copied'); });
+        document.querySelectorAll('.copy-btn').forEach(b => { b.textContent = '📋 copy that'; });
       }, 2000);
     });
   }
-
-  // Scroll reveal
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.08 });
-  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
-
-  // Fart particles
-  const particles = ['💨','🌀','✨','💩'];
-  setInterval(() => {
-    const p = document.createElement('span');
-    p.className = 'particle';
-    p.textContent = particles[Math.floor(Math.random() * particles.length)];
-    p.style.left = (5 + Math.random() * 90) + '%';
-    p.style.top = (55 + Math.random() * 35) + '%';
-    p.style.animationDuration = (3 + Math.random() * 4) + 's';
-    document.body.appendChild(p);
-    setTimeout(() => p.remove(), 5000);
-  }, 2800);
 </script>
 </body>
 </html>
