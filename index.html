@@ -3,419 +3,380 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeFart 💨</title>
+<title>CodeFart — Your AI finished thinking.</title>
+<meta name="description" content="A CLI tool that plays a fart sound when Claude Code finishes responding.">
+<meta property="og:title" content="CodeFart 💨">
+<meta property="og:description" content="Your AI finished thinking. It will let you know — loudly.">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400..700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --yellow: #ffe74c;
-    --pink: #ff6b9d;
-    --purple: #c44dff;
-    --green: #5efc8d;
-    --blue: #5ee8fc;
-    --bg: #1a1a2e;
-    --card: #252540;
-    --text: #fff;
-    --muted: #aaaacc;
+    --yellow: #f0c040;
+    --pink: #e8788a;
+    --bg: #0f0f17;
+    --surface: #171725;
+    --surface-hover: #1e1e32;
+    --border: #252538;
+    --text: #f0f0f5;
+    --muted: #8888a8;
+    --radius-sm: 10px;
+    --radius-lg: 18px;
+    --radius-full: 999px;
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Fredoka', -apple-system, sans-serif;
+    font-family: 'Fredoka', system-ui, sans-serif;
+    line-height: 1.5;
     overflow-x: hidden;
     background-image:
-      radial-gradient(ellipse at 20% 20%, rgba(255,107,157,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 50%, rgba(94,252,141,0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 80%, rgba(94,232,252,0.06) 0%, transparent 50%);
+      radial-gradient(ellipse 600px 400px at 15% 10%, rgba(240,192,64,0.04) 0%, transparent 100%),
+      radial-gradient(ellipse 400px 500px at 85% 60%, rgba(232,120,138,0.03) 0%, transparent 100%);
   }
 
-  .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+  /* Noise */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.025;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
 
-  /* Fart particles */
-  .fart-particle {
-    position: fixed;
-    pointer-events: none;
-    z-index: 0;
-    font-size: 24px;
-    animation: floatUp 3s ease-out forwards;
-    opacity: 0;
+  .container { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+
+  /* Skip link */
+  .skip-link {
+    position: absolute; top: -100px; left: 16px; background: var(--yellow); color: var(--bg);
+    padding: 8px 16px; border-radius: 6px; font-weight: 600; z-index: 10000; transition: top 0.2s;
   }
-  @keyframes floatUp {
-    0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); }
-    20% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-300px) scale(1.5) rotate(20deg); }
-  }
+  .skip-link:focus { top: 16px; }
 
   /* Nav */
   nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(12px);
-    background: rgba(26,26,46,0.85);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 28px; position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(16px); background: rgba(15,15,23,0.82);
+    border-bottom: 1px solid var(--border);
   }
   .logo {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--yellow);
-    text-decoration: none;
-    letter-spacing: -0.02em;
+    font-size: 22px; font-weight: 700; color: var(--text); text-decoration: none; letter-spacing: -0.02em;
   }
-  .nav-links { display: flex; gap: 20px; align-items: center; }
+  .logo-accent { color: var(--yellow); }
+  .nav-links { display: flex; gap: 28px; align-items: center; }
   .nav-links a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 600;
+    color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500;
     transition: color 0.2s;
   }
-  .nav-links a:hover { color: var(--text); }
-  .gh-btn {
-    background: var(--card);
-    padding: 8px 16px;
-    border-radius: 99px;
-    color: var(--text) !important;
-    font-size: 14px !important;
-    border: 2px solid #333355;
-    transition: border-color 0.2s;
+  .nav-links a:hover, .nav-links a:focus-visible { color: var(--text); outline: none; }
+  .nav-links a:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
+  .gh-link {
+    background: var(--surface); padding: 6px 16px; border-radius: var(--radius-full); color: var(--text) !important;
+    border: 1px solid var(--border); font-size: 13px !important;
+    transition: border-color 0.2s, background 0.2s;
   }
-  .gh-btn:hover { border-color: var(--yellow) !important; }
+  .gh-link:hover, .gh-link:focus-visible { border-color: var(--yellow); background: var(--surface-hover); outline: none; }
 
   /* Hero */
   .hero {
-    padding: 80px 0 60px;
-    text-align: center;
-    position: relative;
-    z-index: 1;
+    padding: 100px 0 80px; position: relative; z-index: 1;
   }
-  .hero-emoji {
-    font-size: 80px;
-    animation: bounce 2s infinite;
-    display: block;
-    margin-bottom: 20px;
+  .hero-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
   }
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-16px); }
+  .hero-text { max-width: 480px; }
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(240,192,64,0.1); border: 1px solid rgba(240,192,64,0.2);
+    border-radius: var(--radius-full); padding: 4px 16px 4px 8px;
+    font-size: 13px; color: var(--yellow); margin-bottom: 28px;
+  }
+  .hero-pill-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--yellow);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(1.6); }
   }
   .hero h1 {
-    font-size: clamp(36px, 8vw, 72px);
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    margin-bottom: 20px;
+    font-size: clamp(36px, 6vw, 58px); font-weight: 700; line-height: 1.08;
+    letter-spacing: -0.03em; margin-bottom: 22px;
   }
-  .hero h1 .hl { color: var(--yellow); }
+  .hero h1 mark {
+    background: none; color: var(--yellow);
+    text-decoration: underline; text-decoration-thickness: 3px;
+    text-underline-offset: 6px; text-decoration-color: rgba(240,192,64,0.4);
+  }
   .hero p {
-    font-size: 20px;
-    color: var(--muted);
-    max-width: 520px;
-    margin: 0 auto 36px;
-    line-height: 1.6;
+    font-size: 18px; color: var(--muted); max-width: 420px; margin-bottom: 36px; line-height: 1.65;
   }
+  .hero-visual {
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fart-bubble {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 24px 28px; text-align: center; position: relative;
+    box-shadow: 0 0 60px rgba(240,192,64,0.06);
+  }
+  .fart-bubble .big-emoji { font-size: 64px; display: block; animation: float 3s ease-in-out infinite; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-12px) rotate(3deg); }
+  }
+  .fart-bubble .sub { margin-top: 8px; font-size: 13px; color: var(--muted); }
 
-  /* CTA buttons */
-  .install-box {
-    display: inline-flex;
-    align-items: center;
-    gap: 0;
-    background: #0d0d1a;
-    border: 2px solid #333355;
-    border-radius: 14px;
-    overflow: hidden;
-    font-family: 'SF Mono', 'Fira Code', monospace;
+  /* Install */
+  .install-wrap {
+    background: #0a0a14; border: 1px solid var(--border); border-radius: var(--radius-lg);
+    display: inline-flex; align-items: center; overflow: hidden;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 14px;
   }
-  .install-box code {
-    padding: 16px 22px;
-    font-size: 14px;
-    color: var(--green);
+  .install-wrap code { padding: 15px 20px; color: #8be0a0; }
+  .install-wrap button {
+    background: var(--yellow); border: none; color: var(--bg); padding: 15px 20px;
+    font-family: 'Fredoka', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
+    transition: filter 0.15s, transform 0.1s var(--spring);
   }
-  .install-box button {
-    background: var(--yellow);
-    border: none;
-    color: #1a1a2e;
-    padding: 16px 20px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: 'Fredoka', sans-serif;
-    transition: all 0.15s;
-  }
-  .install-box button:hover { filter: brightness(1.1); }
-  .install-box button.copied { background: var(--green); }
-  .hero-hint {
-    margin-top: 16px;
-    font-size: 16px;
-    color: var(--muted);
-  }
+  .install-wrap button:hover { filter: brightness(1.08); }
+  .install-wrap button:active { transform: scale(0.96); }
+  .install-wrap button.copied { background: #8be0a0; }
+  .install-wrap button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+  .hero-hint { margin-top: 14px; font-size: 14px; color: var(--muted); }
   .hero-hint code {
-    background: var(--card);
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 14px;
-    color: var(--pink);
+    background: var(--surface); padding: 2px 8px; border-radius: 4px; font-size: 13px; color: var(--pink);
   }
 
   /* Section */
-  .section { padding: 80px 0; position: relative; z-index: 1; }
+  .section { padding: 90px 0; position: relative; z-index: 1; }
+  .section-header { margin-bottom: 56px; }
   .section-badge {
-    display: inline-block;
-    background: var(--card);
-    color: var(--yellow);
-    font-size: 14px;
-    font-weight: 700;
-    padding: 6px 16px;
-    border-radius: 99px;
-    margin-bottom: 20px;
+    display: inline-block; background: var(--surface); color: var(--yellow); font-size: 13px;
+    font-weight: 600; padding: 5px 14px; border-radius: var(--radius-full); margin-bottom: 18px;
+    border: 1px solid var(--border);
   }
   .section h2 {
-    font-size: clamp(28px, 5vw, 44px);
-    font-weight: 700;
-    margin-bottom: 16px;
-    line-height: 1.2;
+    font-size: clamp(28px, 4.5vw, 40px); font-weight: 700; line-height: 1.18; letter-spacing: -0.02em;
   }
-  .section > p {
-    font-size: 17px;
-    color: var(--muted);
-    max-width: 560px;
-    margin-bottom: 48px;
+  .section > .container > p {
+    font-size: 16px; color: var(--muted); max-width: 520px; margin-top: 14px;
   }
 
   /* Flow */
   .flow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 32px 20px;
   }
   .flow-step {
-    background: var(--card);
-    border: 2px solid #333355;
-    border-radius: 16px;
-    padding: 20px 18px;
-    text-align: center;
-    min-width: 120px;
-    transition: transform 0.2s, border-color 0.2s;
+    background: #1a1a2e; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 16px 14px; text-align: center; min-width: 100px;
+    transition: transform 0.25s var(--spring), border-color 0.25s;
   }
-  .flow-step:hover { transform: translateY(-4px); }
-  .flow-step .emoji { font-size: 32px; margin-bottom: 8px; display: block; }
-  .flow-step .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-  .flow-step .value { font-size: 14px; font-weight: 600; margin-top: 4px; }
-  .flow-arrow { color: var(--yellow); font-size: 24px; font-weight: 700; }
-  .flow-step.fart {
+  .flow-step:hover { transform: translateY(-4px); border-color: var(--yellow); }
+  .flow-step .emoj { font-size: 26px; display: block; margin-bottom: 6px; }
+  .flow-step .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
+  .flow-step .val { font-size: 13px; font-weight: 600; margin-top: 3px; }
+  .flow-arr { color: var(--yellow); font-size: 22px; font-weight: 700; margin: 0 4px; }
+  .flow-step.boom {
     border-color: var(--yellow);
-    background: rgba(255,231,76,0.08);
-    animation: pulse-border 2s infinite;
-  }
-  @keyframes pulse-border {
-    0%, 100% { border-color: var(--yellow); }
-    50% { border-color: var(--pink); }
+    background: rgba(240,192,64,0.06);
+    box-shadow: 0 0 30px rgba(240,192,64,0.08);
   }
 
-  /* Feature cards */
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
+  /* Feature zig-zag */
+  .feature-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+    padding: 48px 0; border-bottom: 1px solid var(--border);
   }
-  .card {
-    background: var(--card);
-    border: 2px solid #333355;
-    border-radius: 16px;
-    padding: 28px;
-    transition: transform 0.2s, border-color 0.2s;
+  .feature-row:last-child { border-bottom: none; }
+  .feature-row:nth-child(even) .feature-img { order: -1; }
+  .feature-img {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 32px; text-align: center; font-size: 56px;
+    box-shadow: 0 0 40px rgba(240,192,64,0.04);
+    transition: box-shadow 0.3s;
   }
-  .card:hover {
-    transform: translateY(-3px);
-    border-color: var(--yellow);
-  }
-  .card-emoji { font-size: 32px; margin-bottom: 14px; display: block; }
-  .card h3 { font-size: 18px; margin-bottom: 8px; }
-  .card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .feature-img:hover { box-shadow: 0 0 60px rgba(240,192,64,0.1); }
+  .feature-text h3 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .feature-text p { font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 380px; }
 
-  /* Command list */
-  .cmd-list {
-    background: #0d0d1a;
-    border: 2px solid #333355;
-    border-radius: 16px;
+  /* Command table */
+  .cmd-table {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
     overflow: hidden;
   }
   .cmd-row {
-    display: flex;
-    align-items: center;
-    padding: 14px 22px;
-    border-bottom: 1px solid #1e1e35;
-    gap: 16px;
-    transition: background 0.15s;
+    display: flex; align-items: center; padding: 15px 22px; border-bottom: 1px solid var(--border);
+    gap: 24px; transition: background 0.15s;
   }
   .cmd-row:last-child { border-bottom: none; }
-  .cmd-row:hover { background: rgba(255,255,255,0.02); }
+  .cmd-row:hover { background: var(--surface-hover); }
   .cmd-row code {
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 13px;
-    color: var(--green);
-    white-space: nowrap;
-    min-width: 220px;
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: #8be0a0;
+    white-space: nowrap; min-width: 240px;
   }
   .cmd-row span { font-size: 14px; color: var(--muted); }
 
   /* Theme cards */
-  .theme-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-  }
+  .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 480px; }
   .theme-card {
-    background: var(--card);
-    border: 2px solid #333355;
-    border-radius: 14px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    transition: border-color 0.2s;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 22px; display: flex; align-items: center; gap: 16px;
+    transition: border-color 0.2s, transform 0.15s var(--spring);
   }
-  .theme-card:hover { border-color: var(--yellow); }
-  .theme-icon { font-size: 32px; }
-  .theme-card h4 { font-size: 16px; margin-bottom: 2px; }
-  .theme-card p { font-size: 13px; color: var(--muted); }
+  .theme-card:hover { border-color: var(--yellow); transform: translateY(-2px); }
+  .theme-card .tc-icon { font-size: 34px; }
+  .theme-card h4 { font-size: 15px; font-weight: 600; }
+  .theme-card p { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-  /* CTA section */
+  /* CTA */
   .cta-section { padding: 100px 0; text-align: center; position: relative; z-index: 1; }
   .cta-section h2 {
-    font-size: clamp(28px, 5vw, 44px);
-    font-weight: 700;
-    margin-bottom: 12px;
+    font-size: clamp(28px, 4.5vw, 40px); font-weight: 700; margin-bottom: 12px; letter-spacing: -0.02em;
   }
-  .cta-section p { font-size: 18px; color: var(--muted); margin-bottom: 32px; }
+  .cta-section p { font-size: 17px; color: var(--muted); margin-bottom: 36px; }
 
   /* Footer */
   footer {
-    border-top: 2px solid #333355;
-    padding: 28px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-    color: var(--muted);
+    border-top: 1px solid var(--border); padding: 24px 0; display: flex;
+    justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted);
   }
-  footer a { color: var(--muted); text-decoration: none; }
-  footer a:hover { color: var(--yellow); }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover, footer a:focus-visible { color: var(--yellow); outline: none; }
 
-  .scroll-reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0; transform: translateY(28px);
+    transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .scroll-reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
 
-  @media (max-width: 640px) {
-    .hero { padding: 60px 0 40px; }
+  /* Floating fart particles */
+  .particle {
+    position: fixed; pointer-events: none; z-index: 0; font-size: 22px;
+    animation: float-up 4s ease-out forwards; opacity: 0;
+  }
+  @keyframes float-up {
+    0% { opacity: 0; transform: translateY(0) scale(0.4) rotate(-10deg); }
+    15% { opacity: 0.9; }
+    100% { opacity: 0; transform: translateY(-350px) scale(1.3) rotate(30deg); }
+  }
+
+  @media (max-width: 700px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .hero-visual { order: -1; }
+    .feature-row { grid-template-columns: 1fr; gap: 28px; }
+    .feature-row:nth-child(even) .feature-img { order: 0; }
     .flow { flex-direction: column; }
-    .flow-arrow { transform: rotate(90deg); }
+    .flow-arr { transform: rotate(90deg); }
     .cmd-row { flex-direction: column; align-items: flex-start; gap: 2px; }
     .cmd-row code { min-width: auto; }
-    .install-box { flex-direction: column; }
-    .install-box button { width: 100%; }
+    .install-wrap { flex-direction: column; }
+    .install-wrap button { width: 100%; }
+    .theme-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
+<a href="#main" class="skip-link">Skip to content</a>
+
 <nav>
-  <a href="/" class="logo">💨 CodeFart</a>
+  <a href="/" class="logo">💨 Code<span class="logo-accent">Fart</span></a>
   <div class="nav-links">
     <a href="#how">How</a>
     <a href="#cmds">Commands</a>
-    <a href="https://github.com/Onion-L/codefart" class="gh-btn" target="_blank">⭐ GitHub</a>
+    <a href="https://github.com/Onion-L/codefart" class="gh-link" target="_blank" rel="noopener">⭐  Star on GitHub</a>
   </div>
 </nav>
 
-<main>
+<main id="main">
   <section class="hero">
     <div class="container">
-      <span class="hero-emoji">💨</span>
-      <h1>Your AI is <span class="hl">done thinking</span>.<br>You'll know.</h1>
-      <p>A tiny CLI tool that plays a fart sound when Claude Code finishes responding. It's stupid and it works.</p>
-      <div class="install-box">
-        <code>curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash</code>
-        <button onclick="copyCmd()" id="copyBtn">📋 Copy</button>
+      <div class="hero-grid">
+        <div class="hero-text">
+          <div class="hero-pill"><span class="hero-pill-dot"></span>v0.2.6 · 2 farts included</div>
+          <h1>Your AI is <mark>done thinking.</mark> You'll know.</h1>
+          <p>A tiny CLI that plays a fart when Claude finishes. Zero wrappers, zero trust issues. It's stupid and it absolutely works.</p>
+          <div class="install-wrap">
+            <code>curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash</code>
+            <button onclick="copyCmd()" id="copyBtn">📋 Copy</button>
+          </div>
+          <p class="hero-hint">Then <code>codefart setup</code> to wire it into Claude</p>
+        </div>
+        <div class="hero-visual">
+          <div class="fart-bubble">
+            <span class="big-emoji">💨</span>
+            <div class="sub">BRAAAP.wav</div>
+          </div>
+        </div>
       </div>
-      <p class="hero-hint">then <code>codefart setup</code> to wire it up</p>
     </div>
   </section>
 
-  <section class="section scroll-reveal" id="how">
+  <section class="section reveal" id="how">
     <div class="container">
-      <span class="section-badge">🔊 How it works</span>
-      <h2>Claude calls us.<br>We don't touch Claude.</h2>
-      <p>No process wrapping. No shell aliases. Claude's own hook system fires <code>codefart play</code> when it's done. That's it.</p>
+      <div class="section-header">
+        <span class="section-badge">How</span>
+        <h2>We don't touch Claude.<br>Claude calls us.</h2>
+        <p>Claude Code has a built-in Stop hook that fires at the end of every response. We register one command. That's the whole product.</p>
+      </div>
       <div class="flow">
-        <div class="flow-step"><span class="emoji">💬</span><span class="label">You</span><span class="value">claude "..."</span></div>
-        <span class="flow-arrow">→</span>
-        <div class="flow-step"><span class="emoji">🧠</span><span class="label">Claude</span><span class="value">thinks...</span></div>
-        <span class="flow-arrow">→</span>
-        <div class="flow-step"><span class="emoji">🪝</span><span class="label">Hook fires</span><span class="value">Stop event</span></div>
-        <span class="flow-arrow">→</span>
-        <div class="flow-step fart"><span class="emoji">💨</span><span class="label">CodeFart</span><span class="value">BRAAAP</span></div>
+        <div class="flow-step"><span class="emoj">💬</span><span class="lbl">You</span><span class="val">claude "…"</span></div>
+        <span class="flow-arr">→</span>
+        <div class="flow-step"><span class="emoj">🧠</span><span class="lbl">Claude</span><span class="val">thinks</span></div>
+        <span class="flow-arr">→</span>
+        <div class="flow-step"><span class="emoj">🪝</span><span class="lbl">Hook fires</span><span class="val">Stop event</span></div>
+        <span class="flow-arr">→</span>
+        <div class="flow-step boom"><span class="emoj">💨</span><span class="lbl">CodeFart</span><span class="val">BRAAAP</span></div>
       </div>
     </div>
   </section>
 
-  <section class="section scroll-reveal">
+  <section class="section reveal">
     <div class="container">
-      <span class="section-badge">✨ Features</span>
-      <h2>Unnecessary but essential.</h2>
-      <p>Every feature exists because it's funny. The utility is a bonus.</p>
-      <div class="cards">
-        <div class="card">
-          <span class="card-emoji">⚡</span>
-          <h3>One command</h3>
-          <p>curl | bash → done. Under 60 seconds from zero to first fart.</p>
+      <div class="section-header">
+        <span class="section-badge">Why</span>
+        <h2>Three reasons this exists.</h2>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-text">
+          <h3>You walk away. We bring you back.</h3>
+          <p>Claude takes 10–60 seconds. You switch tabs, check your phone, forget. The fart is your cue. It's the most effective notification you've ever ignored.</p>
         </div>
-        <div class="card">
-          <span class="card-emoji">🔊</span>
-          <h3>Real fart sounds</h3>
-          <p>classic &amp; wet themes built in. Add your own. Preview before committing.</p>
+        <div class="feature-img">🚶‍♂️💨</div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-text">
+          <h3>Not a wrapper. A hook.</h3>
+          <p>No shell aliases. No process interception. Open <code>~/.claude/settings.json</code> and you'll see exactly what we added: one Stop hook entry. That's it.</p>
         </div>
-        <div class="card">
-          <span class="card-emoji">🛡️</span>
-          <h3>No spying</h3>
-          <p>Check ~/.claude/settings.json yourself. One hook entry. Nothing else.</p>
+        <div class="feature-img">🪝</div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-text">
+          <h3>Fun is a feature.</h3>
+          <p>Every other notification tool is boring. This one has a theme called "wet" and a preview mode with arrow keys. You'll tell your friends about it.</p>
         </div>
-        <div class="card">
-          <span class="card-emoji">🕹️</span>
-          <h3>Arrow key picker</h3>
-          <p>↑↓ to browse themes, Enter to pick. Preview mode for try-before-you-buy.</p>
-        </div>
-        <div class="card">
-          <span class="card-emoji">🔄</span>
-          <h3>Self-updating</h3>
-          <p>codefart update. Pulls the latest. Asks for sudo only when needed.</p>
-        </div>
-        <div class="card">
-          <span class="card-emoji">📦</span>
-          <h3>Wrap anything</h3>
-          <p>codefart run -- npm run build. Fart on CI. Fart on deploy. Fart on everything.</p>
-        </div>
+        <div class="feature-img">🎉</div>
       </div>
     </div>
   </section>
 
-  <section class="section scroll-reveal" id="cmds">
+  <section class="section reveal" id="cmds">
     <div class="container">
-      <span class="section-badge">📟 Commands</span>
-      <h2>One command per thing.<br>No config files to touch.</h2>
-      <p>Everything you'd want to do with a fart notification tool.</p>
-      <div class="cmd-list">
+      <div class="section-header">
+        <span class="section-badge">Commands</span>
+        <h2>One command per thing.<br>No config files.</h2>
+        <p>Everything you'd want to do with a fart notification tool.</p>
+      </div>
+      <div class="cmd-table">
         <div class="cmd-row"><code>codefart setup</code><span>Wire into Claude (once)</span></div>
         <div class="cmd-row"><code>codefart play</code><span>Play current sound</span></div>
         <div class="cmd-row"><code>codefart list</code><span>Show themes, highlight current</span></div>
@@ -426,34 +387,36 @@
         <div class="cmd-row"><code>codefart remove</code><span>Clear custom sound</span></div>
         <div class="cmd-row"><code>codefart reset</code><span>Back to factory settings</span></div>
         <div class="cmd-row"><code>codefart update</code><span>Get the latest version</span></div>
-        <div class="cmd-row"><code>codefart run -- &lt;cmd&gt;</code><span>Wrap any command 💨</span></div>
+        <div class="cmd-row"><code>codefart run -- npm run build</code><span>Wrap any command 💨</span></div>
       </div>
     </div>
   </section>
 
-  <section class="section scroll-reveal">
+  <section class="section reveal">
     <div class="container">
-      <span class="section-badge">🎵 Sounds</span>
-      <h2>Two farts. More coming.</h2>
-      <p>Each one has a name because naming things is half the fun.</p>
+      <div class="section-header">
+        <span class="section-badge">Sounds</span>
+        <h2>Two farts. More coming.</h2>
+        <p>Naming things is half the fun.</p>
+      </div>
       <div class="theme-grid">
         <div class="theme-card">
-          <span class="theme-icon">💨</span>
-          <div><h4>classic</h4><p>The definitive CodeFart experience</p></div>
+          <span class="tc-icon">💨</span>
+          <div><h4>classic</h4><p>The definitive experience</p></div>
         </div>
         <div class="theme-card">
-          <span class="theme-icon">💦</span>
-          <div><h4>wet</h4><p>A dramatically wetter variant</p></div>
+          <span class="tc-icon">💦</span>
+          <div><h4>wet</h4><p>Dramatically wetter</p></div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="cta-section scroll-reveal">
+  <section class="cta-section reveal">
     <div class="container">
       <h2>You'll never miss a response again.</h2>
-      <p>And yes, it's actually called CodeFart.</p>
-      <div class="install-box">
+      <p>Yes, it's actually called CodeFart.</p>
+      <div class="install-wrap">
         <code>curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash</code>
         <button onclick="copyCmd()">📋 Copy</button>
       </div>
@@ -462,7 +425,7 @@
 </main>
 
 <footer class="container">
-  <span>💨 CodeFart · MIT · <a href="https://github.com/Onion-L/codefart" target="_blank">GitHub</a></span>
+  <span>💨 CodeFart · <a href="https://github.com/Onion-L/codefart" target="_blank" rel="noopener">GitHub</a> · MIT</span>
   <span>Made with immature humor</span>
 </footer>
 
@@ -470,33 +433,31 @@
   function copyCmd() {
     const code = 'curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash';
     navigator.clipboard.writeText(code).then(() => {
-      const btns = document.querySelectorAll('.install-box button');
-      btns.forEach(b => { b.textContent = '✅ Copied!'; b.classList.add('copied'); });
+      document.querySelectorAll('.install-wrap button').forEach(b => { b.textContent = '✅ Copied!'; b.classList.add('copied'); });
       setTimeout(() => {
-        btns.forEach(b => { b.textContent = '📋 Copy'; b.classList.remove('copied'); });
+        document.querySelectorAll('.install-wrap button').forEach(b => { b.textContent = '📋 Copy'; b.classList.remove('copied'); });
       }, 2000);
     });
   }
 
   // Scroll reveal
-  const obs = new IntersectionObserver((entries) => {
+  const obs = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.scroll-reveal').forEach(el => obs.observe(el));
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-  // Random fart particles
-  const emojis = ['💨', '💩', '🌀', '✨', '🎺'];
+  // Fart particles
+  const particles = ['💨','🌀','✨','💩'];
   setInterval(() => {
     const p = document.createElement('span');
-    p.className = 'fart-particle';
-    p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    p.style.left = Math.random() * 100 + '%';
-    p.style.top = (60 + Math.random() * 30) + '%';
-    p.style.animationDuration = (2 + Math.random() * 3) + 's';
+    p.className = 'particle';
+    p.textContent = particles[Math.floor(Math.random() * particles.length)];
+    p.style.left = (5 + Math.random() * 90) + '%';
+    p.style.top = (55 + Math.random() * 35) + '%';
+    p.style.animationDuration = (3 + Math.random() * 4) + 's';
     document.body.appendChild(p);
-    setTimeout(() => p.remove(), 4000);
-  }, 2500);
+    setTimeout(() => p.remove(), 5000);
+  }, 2800);
 </script>
-
 </body>
 </html>
