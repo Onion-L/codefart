@@ -31,11 +31,9 @@
 - [x] GitHub Actions 编译 macOS arm64 + x86_64，打 tag 自动发布
 - [x] `install.sh` / `uninstall.sh` curl 一键安装/卸载
 - [x] README.md
-- [ ] 15 秒 demo gif
 
 ## Phase 4: 后续
 
 - [x] `codefart preview` 交互试听
 - [x] 调研其他 AI 工具 hook 支持：Codex / Opencode / pi / Kimi Code 均无，仅 Claude Code 有
 - [x] 真实屁声音效补充（5 个：classic / wet / tiny / squeaky / thunder）
-- [ ] ~~demo gif~~ （不做了）
