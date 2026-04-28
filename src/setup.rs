@@ -22,8 +22,21 @@ fn codefart_hook_entry() -> serde_json::Value {
     })
 }
 
+/// Check whether CodeFart's hook is installed in Claude settings.
+pub fn check_hook_installed() -> Result<bool, CodefartError> {
+    let path = claude_settings_path();
+    if !path.exists() {
+        return Ok(false);
+    }
+    let content =
+        std::fs::read_to_string(&path).map_err(CodefartError::ClaudeSettingsRead)?;
+    let settings: serde_json::Value =
+        serde_json::from_str(&content).map_err(CodefartError::ClaudeSettingsParse)?;
+    Ok(has_codefart_hook(&settings))
+}
+
 /// Check whether CodeFart's hook is already present in the settings.
-fn has_codefart_hook(settings: &serde_json::Value) -> bool {
+pub fn has_codefart_hook(settings: &serde_json::Value) -> bool {
     settings
         .get("hooks")
         .and_then(|h| h.get("Stop"))

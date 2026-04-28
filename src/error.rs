@@ -14,7 +14,7 @@ pub enum CodefartError {
     #[error("failed to write config: {0}")]
     ConfigWrite(#[source] std::io::Error),
 
-    #[error("unknown theme: {0}")]
+    #[error("unknown theme '{0}'. run `codefart list` to see available themes")]
     UnknownTheme(String),
 
     #[error("custom sound file not found: {0}")]

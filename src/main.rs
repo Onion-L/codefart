@@ -21,8 +21,9 @@ fn main() {
         Commands::Theme { name } => cmd_theme(&name),
         Commands::SetSound { path } => cmd_set_sound(&path),
         Commands::Reset => cmd_reset(),
-        Commands::Remove => cmd_remove(),
+        Commands::Clear => cmd_clear(),
         Commands::Setup => cmd_setup(),
+        Commands::Status => cmd_status(),
         Commands::Preview { name } => cmd_preview(&name),
         Commands::Update => cmd_update(),
         Commands::Run { args } => cmd_run(&args),
@@ -71,15 +72,6 @@ fn cmd_theme(name: &Option<String>) -> Result<(), error::CodefartError> {
     };
 
     if !Config::is_valid_theme(&theme_name) {
-        eprintln!(
-            "Unknown theme: {}\nValid themes: {}",
-            theme_name,
-            config::BUILTIN_THEMES
-                .iter()
-                .map(|(n, _)| *n)
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
         return Err(error::CodefartError::UnknownTheme(theme_name));
     }
 
@@ -145,18 +137,17 @@ fn cmd_set_sound(path: &str) -> Result<(), error::CodefartError> {
     Ok(())
 }
 
-fn cmd_remove() -> Result<(), error::CodefartError> {
+fn cmd_clear() -> Result<(), error::CodefartError> {
     let mut config = Config::load()?;
     config.custom_sound = None;
     config.save()?;
 
-    // Clean up managed sounds
     let sounds_dir = Config::sounds_dir();
     if sounds_dir.exists() {
         let _ = std::fs::remove_dir_all(&sounds_dir);
     }
 
-    println!("Custom sound removed. Using theme: {}", config.active_theme());
+    println!("Custom sound cleared. Using theme: {}", config.active_theme());
     Ok(())
 }
 
@@ -178,6 +169,26 @@ fn cmd_setup() -> Result<(), error::CodefartError> {
         }
         Err(e) => return Err(e),
     }
+    Ok(())
+}
+
+fn cmd_status() -> Result<(), error::CodefartError> {
+    let config = Config::load()?;
+
+    // Hook status
+    match setup::check_hook_installed() {
+        Ok(true) => println!("Hook:     ✓ installed (~/.claude/settings.json)"),
+        Ok(false) => println!("Hook:     ✗ not installed (run `codefart setup`)"),
+        Err(_) => println!("Hook:     ? unable to check"),
+    }
+
+    // Theme / sound
+    if let Some(ref path) = config.custom_sound {
+        println!("Sound:    custom ({})", path);
+    } else {
+        println!("Theme:    {}", config.active_theme());
+    }
+
     Ok(())
 }
 
@@ -218,7 +229,7 @@ fn cmd_preview(name: &Option<String>) -> Result<(), error::CodefartError> {
 fn cmd_run(args: &[String]) -> Result<(), error::CodefartError> {
     if args.is_empty() {
         return Err(error::CodefartError::Other(
-            "usage: codefart run -- <command> [args...]".into(),
+            "usage: codefart run -- <command> [args...]\nnote: the `--` separator is required".into(),
         ));
     }
 
