@@ -1,27 +1,17 @@
-[package]
-name = "codefart"
+[workspace]
+members = [
+    "crates/*",
+    # "desktop/src-tauri",  # Tauri desktop app (v2)
+]
+resolver = "3"
+
+[workspace.package]
 version = "0.2.12"
 edition = "2024"
 description = "💨 Play a sound when your AI finishes thinking"
 repository = "https://github.com/Onion-L/codefart"
 license = "MIT"
 authors = ["Onion-L"]
-readme = "README.md"
-
-[dependencies]
-clap = { version = "4", features = ["derive"] }
-rodio = "0.18"
-rust-embed = "8"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-toml = "0.8"
-dirs = "6"
-anyhow = "1"
-thiserror = "2"
-shellexpand = "3"
-ureq = "3"
-tempfile = "3"
-dialoguer = "0.11"
 
 [profile.release]
 strip = "debuginfo"

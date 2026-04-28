@@ -1,6 +1,6 @@
 use std::process::{self, ExitStatus};
 
-use crate::error::CodefartError;
+use codefart_core::error::CodefartError;
 
 /// Execute a command, wait for it to finish, then return its exit status.
 /// stdin/stdout/stderr are all inherited so interactive programs work.

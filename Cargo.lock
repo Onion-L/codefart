@@ -90,12 +90,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anyhow"
-version = "1.0.102"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
-
-[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -270,9 +264,16 @@ checksum = "4bfbf56724aa9eca8afa4fcfadeb479e722935bb2a0900c2d37e0cc477af0688"
 name = "codefart"
 version = "0.2.12"
 dependencies = [
- "anyhow",
  "clap",
+ "codefart-core",
  "dialoguer",
+ "shellexpand",
+]
+
+[[package]]
+name = "codefart-core"
+version = "0.2.12"
+dependencies = [
  "dirs",
  "rodio",
  "rust-embed",

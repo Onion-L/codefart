@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Test Commands
 
-* **Build (Debug):** `cargo build`
-* **Build (Release):** `cargo build --release`
-* **Run (with arguments):** `cargo run -- [args]`
+* **Build CLI (Debug):** `cargo build -p codefart`
+* **Build CLI (Release):** `cargo build --release -p codefart`
+* **Run CLI (with arguments):** `cargo run -p codefart -- [args]`
+* **Build all:** `cargo build`
 * **Test:** `cargo test` (Currently no tests exist, but use this when adding them)
 * **Linting & Formatting:**
   * `cargo clippy -- -D warnings`
@@ -14,17 +15,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture & Structure
 
-CodeFart is a lightweight Rust CLI application that plays a sound (typically a fart sound) when Claude Code finishes thinking. It leverages the `rodio` crate for audio playback and `rust-embed` to embed default sound assets into the binary.
+CodeFart is a Cargo workspace with a shared core library and multiple frontends.
 
-The application is structured around a central command router in `src/main.rs`, which delegates functionality to specific modules:
+```
+codefart-app/
+├── Cargo.toml            ← workspace root
+├── crates/
+│   ├── codefart-core/    ← shared library: audio, config, setup, update, error
+│   │   └── sounds/       ← embedded WAV sound assets
+│   └── codefart-cli/     ← CLI frontend: main, cli, runner
+├── desktop/              ← (planned) Tauri desktop app
+├── install.sh / install.ps1 / uninstall.sh
+└── .github/workflows/release.yml
+```
 
-* **`src/cli.rs`**: Defines the CLI arguments and subcommands using `clap`.
-* **`src/config.rs`**: Manages configuration (theme/custom sound) read from and written to `~/.config/codefart/config.toml`. It resolves sound paths.
-* **`src/audio.rs`**: Handles audio playback. It determines whether to play a bundled sound asset (via `rust-embed`) or load a custom sound file from the user's filesystem.
-* **`src/setup.rs`**: Responsible for configuring Claude Code's global settings hook (`~/.claude/settings.json`) to trigger `codefart play` on the `Stop` event.
-* **`src/update.rs`**: Implements self-updating functionality by fetching the latest release from GitHub and replacing the current binary (handling permissions/sudo if necessary).
-* **`src/runner.rs`**: Implements the `run` subcommand, acting as a wrapper to execute arbitrary commands and play a sound upon their completion.
-* **`src/error.rs`**: Defines application-specific error types.
+### `crates/codefart-core/` — Shared Library
 
-## Assets
-Built-in sounds are stored in the `sounds/` directory at the project root and are embedded into the binary during compilation.
+* **`audio.rs`**: Audio playback via `rodio`. Built-in sound themes embedded with `rust-embed`. Supports custom sound files.
+* **`config.rs`**: Configuration (theme/custom sound) stored at `~/.config/codefart/config.toml`.
+* **`setup.rs`**: Installs/checks Claude Code Stop hook in `~/.claude/settings.json`.
+* **`update.rs`**: Self-updater — fetches latest GitHub release, replaces binary.
+* **`error.rs`**: `CodefartError` enum with silent-fail support for audio errors.
+
+### `crates/codefart-cli/` — CLI Frontend
+
+* **`main.rs`**: Command router dispatching to core functions.
+* **`cli.rs`**: Clap CLI argument definitions.
+* **`runner.rs`**: Wraps arbitrary commands, plays sound on completion.
+
+### Assets
+Built-in sounds are stored in `crates/codefart-core/sounds/` and embedded into the core library via `rust-embed`.

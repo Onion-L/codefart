@@ -42,19 +42,15 @@ pub fn play_theme(theme: &str) -> Result<(), CodefartError> {
         .map(|f| f.data.to_vec())
         .ok_or_else(|| CodefartError::UnknownTheme(theme.to_string()))?;
 
-    let (_stream, stream_handle) =
-        OutputStream::try_default().map_err(|e| {
-            CodefartError::AudioPlayback(format!("no audio device: {}", e))
-        })?;
+    let (_stream, stream_handle) = OutputStream::try_default()
+        .map_err(|e| CodefartError::AudioPlayback(format!("no audio device: {}", e)))?;
 
     let cursor = Cursor::new(audio_data);
-    let source = Decoder::new(cursor).map_err(|e| {
-        CodefartError::AudioPlayback(format!("failed to decode audio: {}", e))
-    })?;
+    let source = Decoder::new(cursor)
+        .map_err(|e| CodefartError::AudioPlayback(format!("failed to decode audio: {}", e)))?;
 
-    let sink = Sink::try_new(&stream_handle).map_err(|e| {
-        CodefartError::AudioPlayback(format!("failed to create sink: {}", e))
-    })?;
+    let sink = Sink::try_new(&stream_handle)
+        .map_err(|e| CodefartError::AudioPlayback(format!("failed to create sink: {}", e)))?;
     sink.append(source);
     sink.sleep_until_end();
     Ok(())
@@ -66,16 +62,13 @@ pub fn play_sound(config: &Config) -> Result<(), CodefartError> {
     let audio_data = resolve_sound(config)?;
 
     // Set up audio output
-    let (_stream, stream_handle) =
-        OutputStream::try_default().map_err(|e| {
-            CodefartError::AudioPlayback(format!("no audio device: {}", e))
-        })?;
+    let (_stream, stream_handle) = OutputStream::try_default()
+        .map_err(|e| CodefartError::AudioPlayback(format!("no audio device: {}", e)))?;
 
     // Decode from memory
     let cursor = Cursor::new(audio_data);
-    let source = Decoder::new(cursor).map_err(|e| {
-        CodefartError::AudioPlayback(format!("failed to decode audio: {}", e))
-    })?;
+    let source = Decoder::new(cursor)
+        .map_err(|e| CodefartError::AudioPlayback(format!("failed to decode audio: {}", e)))?;
 
     // Play and wait
     play_to_end(source, &stream_handle)?;
@@ -84,10 +77,12 @@ pub fn play_sound(config: &Config) -> Result<(), CodefartError> {
 }
 
 /// Play a source to completion, blocking the current thread.
-fn play_to_end(source: Decoder<Cursor<Vec<u8>>>, handle: &OutputStreamHandle) -> Result<(), CodefartError> {
-    let sink = Sink::try_new(handle).map_err(|e| {
-        CodefartError::AudioPlayback(format!("failed to create sink: {}", e))
-    })?;
+fn play_to_end(
+    source: Decoder<Cursor<Vec<u8>>>,
+    handle: &OutputStreamHandle,
+) -> Result<(), CodefartError> {
+    let sink = Sink::try_new(handle)
+        .map_err(|e| CodefartError::AudioPlayback(format!("failed to create sink: {}", e)))?;
     sink.append(source);
     sink.sleep_until_end();
     Ok(())

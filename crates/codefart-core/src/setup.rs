@@ -28,8 +28,7 @@ pub fn check_hook_installed() -> Result<bool, CodefartError> {
     if !path.exists() {
         return Ok(false);
     }
-    let content =
-        std::fs::read_to_string(&path).map_err(CodefartError::ClaudeSettingsRead)?;
+    let content = std::fs::read_to_string(&path).map_err(CodefartError::ClaudeSettingsRead)?;
     let settings: serde_json::Value =
         serde_json::from_str(&content).map_err(CodefartError::ClaudeSettingsParse)?;
     Ok(has_codefart_hook(&settings))
@@ -48,9 +47,7 @@ pub fn has_codefart_hook(settings: &serde_json::Value) -> bool {
                     .and_then(|h| h.as_array())
                     .map(|hooks| {
                         hooks.iter().any(|h| {
-                            h.get("command")
-                                .and_then(|c| c.as_str())
-                                == Some("codefart play")
+                            h.get("command").and_then(|c| c.as_str()) == Some("codefart play")
                         })
                     })
                     .unwrap_or(false)
@@ -67,8 +64,7 @@ pub fn install_hook() -> Result<bool, CodefartError> {
 
     // Read existing settings (or start fresh)
     let mut settings: serde_json::Value = if path.exists() {
-        let content = std::fs::read_to_string(&path)
-            .map_err(CodefartError::ClaudeSettingsRead)?;
+        let content = std::fs::read_to_string(&path).map_err(CodefartError::ClaudeSettingsRead)?;
         serde_json::from_str(&content).map_err(CodefartError::ClaudeSettingsParse)?
     } else {
         serde_json::json!({})
@@ -96,9 +92,7 @@ pub fn install_hook() -> Result<bool, CodefartError> {
     if let Some(arr) = stop_arr.as_array_mut() {
         arr.push(codefart_hook_entry());
     } else {
-        return Err(CodefartError::Other(
-            "hooks.Stop is not an array".into(),
-        ));
+        return Err(CodefartError::Other("hooks.Stop is not an array".into()));
     }
 
     // Write back

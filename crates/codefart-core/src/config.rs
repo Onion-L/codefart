@@ -39,12 +39,8 @@ impl Config {
     pub fn load() -> Result<Config, CodefartError> {
         let path = Self::config_path();
         match std::fs::read_to_string(&path) {
-            Ok(content) => {
-                toml::from_str(&content).map_err(CodefartError::ConfigParse)
-            }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                Ok(Config::default())
-            }
+            Ok(content) => toml::from_str(&content).map_err(CodefartError::ConfigParse),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
             Err(e) => Err(CodefartError::ConfigRead(e)),
         }
     }
@@ -53,8 +49,7 @@ impl Config {
     pub fn save(&self) -> Result<(), CodefartError> {
         let path = Self::config_path();
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(CodefartError::ConfigWrite)?;
+            std::fs::create_dir_all(parent).map_err(CodefartError::ConfigWrite)?;
         }
         let content = toml::to_string_pretty(self)?;
         std::fs::write(&path, content).map_err(CodefartError::ConfigWrite)

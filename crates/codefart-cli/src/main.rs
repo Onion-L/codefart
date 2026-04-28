@@ -1,16 +1,12 @@
-mod audio;
 mod cli;
-mod config;
-mod error;
 mod runner;
-mod setup;
-mod update;
 
 use std::process;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use config::Config;
+use codefart_core::config::Config;
+use codefart_core::error::CodefartError;
 
 fn main() {
     let cli = Cli::parse();
@@ -29,6 +25,8 @@ fn main() {
         Commands::Run { args } => cmd_run(&args),
     };
 
+    let result: Result<(), CodefartError> = result;
+
     match result {
         Ok(()) => process::exit(0),
         Err(e) => {
@@ -42,19 +40,23 @@ fn main() {
     }
 }
 
-fn cmd_play() -> Result<(), error::CodefartError> {
+fn cmd_play() -> Result<(), CodefartError> {
     let config = Config::load()?;
-    audio::play_sound(&config)?;
+    codefart_core::audio::play_sound(&config)?;
     Ok(())
 }
 
-fn cmd_list() -> Result<(), error::CodefartError> {
+fn cmd_list() -> Result<(), CodefartError> {
     let config = Config::load()?;
     let current_theme = config.active_theme();
 
     println!("Available themes:");
-    for (name, desc) in config::BUILTIN_THEMES {
-        let marker = if *name == current_theme { " ← current" } else { "" };
+    for (name, desc) in codefart_core::config::BUILTIN_THEMES {
+        let marker = if *name == current_theme {
+            " ← current"
+        } else {
+            ""
+        };
         println!("  {:<12} {}{}", name, desc, marker);
     }
 
@@ -65,14 +67,14 @@ fn cmd_list() -> Result<(), error::CodefartError> {
     Ok(())
 }
 
-fn cmd_theme(name: &Option<String>) -> Result<(), error::CodefartError> {
+fn cmd_theme(name: &Option<String>) -> Result<(), CodefartError> {
     let theme_name = match name {
         Some(n) => n.clone(),
         None => select_theme_interactive()?,
     };
 
     if !Config::is_valid_theme(&theme_name) {
-        return Err(error::CodefartError::UnknownTheme(theme_name));
+        return Err(CodefartError::UnknownTheme(theme_name));
     }
 
     let mut config = Config::load()?;
@@ -82,16 +84,16 @@ fn cmd_theme(name: &Option<String>) -> Result<(), error::CodefartError> {
     Ok(())
 }
 
-fn select_theme_interactive() -> Result<String, error::CodefartError> {
+fn select_theme_interactive() -> Result<String, CodefartError> {
     let config = Config::load().unwrap_or_default();
     let current = config.active_theme();
 
-    let items: Vec<String> = config::BUILTIN_THEMES
+    let items: Vec<String> = codefart_core::config::BUILTIN_THEMES
         .iter()
         .map(|(name, desc)| format!("{:<12} {}", name, desc))
         .collect();
 
-    let default_idx = config::BUILTIN_THEMES
+    let default_idx = codefart_core::config::BUILTIN_THEMES
         .iter()
         .position(|(n, _)| *n == current)
         .unwrap_or(0);
@@ -101,33 +103,34 @@ fn select_theme_interactive() -> Result<String, error::CodefartError> {
         .items(&items)
         .default(default_idx)
         .interact()
-        .map_err(|e| error::CodefartError::Other(format!("selection failed: {}", e)))?;
+        .map_err(|e| CodefartError::Other(format!("selection failed: {}", e)))?;
 
-    Ok(config::BUILTIN_THEMES[selection].0.to_string())
+    Ok(codefart_core::config::BUILTIN_THEMES[selection]
+        .0
+        .to_string())
 }
 
-fn cmd_set_sound(path: &str) -> Result<(), error::CodefartError> {
+fn cmd_set_sound(path: &str) -> Result<(), CodefartError> {
     // Expand ~ in path
     let expanded = shellexpand::tilde(path);
     let source = std::path::Path::new(expanded.as_ref());
 
     if !source.exists() {
-        return Err(error::CodefartError::SoundFileNotFound(path.to_string()));
+        return Err(CodefartError::SoundFileNotFound(path.to_string()));
     }
 
     // Copy to managed sounds directory
     let sounds_dir = Config::sounds_dir();
     std::fs::create_dir_all(&sounds_dir)
-        .map_err(|e| error::CodefartError::Other(format!("cannot create sounds dir: {}", e)))?;
+        .map_err(|e| CodefartError::Other(format!("cannot create sounds dir: {}", e)))?;
 
     let filename = source
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("custom");
     let dest = sounds_dir.join(filename);
-    std::fs::copy(source, &dest).map_err(|e| {
-        error::CodefartError::Other(format!("cannot copy sound file: {}", e))
-    })?;
+    std::fs::copy(source, &dest)
+        .map_err(|e| CodefartError::Other(format!("cannot copy sound file: {}", e)))?;
 
     let stored_path = dest.to_string_lossy().to_string();
     let mut config = Config::load()?;
@@ -137,7 +140,7 @@ fn cmd_set_sound(path: &str) -> Result<(), error::CodefartError> {
     Ok(())
 }
 
-fn cmd_clear() -> Result<(), error::CodefartError> {
+fn cmd_clear() -> Result<(), CodefartError> {
     let mut config = Config::load()?;
     config.custom_sound = None;
     config.save()?;
@@ -147,19 +150,22 @@ fn cmd_clear() -> Result<(), error::CodefartError> {
         let _ = std::fs::remove_dir_all(&sounds_dir);
     }
 
-    println!("Custom sound cleared. Using theme: {}", config.active_theme());
+    println!(
+        "Custom sound cleared. Using theme: {}",
+        config.active_theme()
+    );
     Ok(())
 }
 
-fn cmd_reset() -> Result<(), error::CodefartError> {
+fn cmd_reset() -> Result<(), CodefartError> {
     let config = Config::default();
     config.save()?;
     println!("Reset to default theme (classic). Custom sound cleared.");
     Ok(())
 }
 
-fn cmd_setup() -> Result<(), error::CodefartError> {
-    match setup::install_hook() {
+fn cmd_setup() -> Result<(), CodefartError> {
+    match codefart_core::setup::install_hook() {
         Ok(true) => {
             println!("✓ Added Stop hook to ~/.claude/settings.json");
             println!("✓ Done. Next Claude session will play a sound on response.");
@@ -172,11 +178,11 @@ fn cmd_setup() -> Result<(), error::CodefartError> {
     Ok(())
 }
 
-fn cmd_status() -> Result<(), error::CodefartError> {
+fn cmd_status() -> Result<(), CodefartError> {
     let config = Config::load()?;
 
     // Hook status
-    match setup::check_hook_installed() {
+    match codefart_core::setup::check_hook_installed() {
         Ok(true) => println!("Hook:     ✓ installed (~/.claude/settings.json)"),
         Ok(false) => println!("Hook:     ✗ not installed (run `codefart setup`)"),
         Err(_) => println!("Hook:     ? unable to check"),
@@ -192,23 +198,23 @@ fn cmd_status() -> Result<(), error::CodefartError> {
     Ok(())
 }
 
-fn cmd_update() -> Result<(), error::CodefartError> {
-    let path = update::update()?;
+fn cmd_update() -> Result<(), CodefartError> {
+    let path = codefart_core::update::update()?;
     println!("✓ Updated to latest version: {}", path);
     Ok(())
 }
 
-fn cmd_preview(name: &Option<String>) -> Result<(), error::CodefartError> {
+fn cmd_preview(name: &Option<String>) -> Result<(), CodefartError> {
     if let Some(n) = name {
         if !Config::is_valid_theme(n) {
-            return Err(error::CodefartError::UnknownTheme(n.to_string()));
+            return Err(CodefartError::UnknownTheme(n.to_string()));
         }
         println!("Previewing {}...", n);
-        return audio::play_theme(n);
+        return codefart_core::audio::play_theme(n);
     }
 
     // Interactive mode: select + preview in a loop, Ctrl-C to exit
-    let items: Vec<String> = config::BUILTIN_THEMES
+    let items: Vec<String> = codefart_core::config::BUILTIN_THEMES
         .iter()
         .map(|(n, desc)| format!("{:<12} {}", n, desc))
         .collect();
@@ -219,17 +225,18 @@ fn cmd_preview(name: &Option<String>) -> Result<(), error::CodefartError> {
             .items(&items)
             .default(0)
             .interact()
-            .map_err(|e| error::CodefartError::Other(format!("selection failed: {}", e)))?;
+            .map_err(|e| CodefartError::Other(format!("selection failed: {}", e)))?;
 
-        let theme_name = config::BUILTIN_THEMES[selection].0;
-        let _ = audio::play_theme(theme_name);
+        let theme_name = codefart_core::config::BUILTIN_THEMES[selection].0;
+        let _ = codefart_core::audio::play_theme(theme_name);
     }
 }
 
-fn cmd_run(args: &[String]) -> Result<(), error::CodefartError> {
+fn cmd_run(args: &[String]) -> Result<(), CodefartError> {
     if args.is_empty() {
-        return Err(error::CodefartError::Other(
-            "usage: codefart run -- <command> [args...]\nnote: the `--` separator is required".into(),
+        return Err(CodefartError::Other(
+            "usage: codefart run -- <command> [args...]\nnote: the `--` separator is required"
+                .into(),
         ));
     }
 
@@ -240,7 +247,7 @@ fn cmd_run(args: &[String]) -> Result<(), error::CodefartError> {
 
     // Play sound regardless of exit code (audio errors are silent)
     let config = Config::load().unwrap_or_default();
-    let _ = audio::play_sound(&config);
+    let _ = codefart_core::audio::play_sound(&config);
 
     // Forward the command's exit code
     let code = runner::status_to_code(status);

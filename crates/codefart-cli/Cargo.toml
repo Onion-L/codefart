@@ -1,0 +1,18 @@
+[package]
+name = "codefart"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "codefart"
+path = "src/main.rs"
+
+[dependencies]
+codefart-core = { path = "../codefart-core" }
+clap = { version = "4", features = ["derive"] }
+dialoguer = "0.11"
+shellexpand = "3"

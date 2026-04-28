@@ -75,12 +75,8 @@ pub fn update() -> Result<String, CodefartError> {
     {
         let old_exe = current_exe.with_extension("exe.old");
         let _ = fs::remove_file(&old_exe);
-        fs::rename(&current_exe, &old_exe).map_err(|e| {
-            CodefartError::Other(format!(
-                "cannot rename current exe: {}",
-                e
-            ))
-        })?;
+        fs::rename(&current_exe, &old_exe)
+            .map_err(|e| CodefartError::Other(format!("cannot rename current exe: {}", e)))?;
         if let Err(e) = fs::rename(&new_binary, &current_exe) {
             let _ = fs::rename(&old_exe, &current_exe);
             return Err(CodefartError::Other(format!(
@@ -182,10 +178,7 @@ fn extract_archive(archive: &std::path::Path, dest: &std::path::Path) -> Result<
 }
 
 fn get_latest_release_url(target: &str) -> Result<String, CodefartError> {
-    let api_url = format!(
-        "https://api.github.com/repos/{}/releases/latest",
-        REPO
-    );
+    let api_url = format!("https://api.github.com/repos/{}/releases/latest", REPO);
 
     let response = ureq::get(&api_url)
         .header("User-Agent", "codefart")
