@@ -37,5 +37,5 @@
 
 - [x] `codefart preview` 交互试听
 - [x] 调研其他 AI 工具 hook 支持：Codex / Opencode / pi / Kimi Code 均无，仅 Claude Code 有
-- [ ] 真实屁声音效补充（目前 2 个：classic / wet）
-- [ ] demo gif
+- [x] 真实屁声音效补充（5 个：classic / wet / tiny / squeaky / thunder）
+- [ ] ~~demo gif~~ （不做了）
