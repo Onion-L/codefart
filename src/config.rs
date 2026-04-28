@@ -7,6 +7,9 @@ use crate::error::CodefartError;
 pub const BUILTIN_THEMES: &[(&str, &str)] = &[
     ("classic", "The signature CodeFart sound"),
     ("wet", "A wetter, more dramatic variant"),
+    ("tiny", "A small, polite notification fart"),
+    ("squeaky", "High-pitched, brief"),
+    ("thunder", "For those long CI runs"),
 ];
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
