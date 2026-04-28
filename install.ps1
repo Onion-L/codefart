@@ -5,9 +5,9 @@ $installDir = "$env:LOCALAPPDATA\codefart"
 # Detect architecture
 switch ($env:PROCESSOR_ARCHITECTURE) {
     "AMD64" { $target = "x86_64-pc-windows-msvc" }
-    "ARM64" { $target = "aarch64-pc-windows-msvc" }
     default {
         Write-Error "Error: unsupported architecture: $env:PROCESSOR_ARCHITECTURE"
+        Write-Error "CodeFart on Windows currently supports x86_64 only."
         exit 1
     }
 }
