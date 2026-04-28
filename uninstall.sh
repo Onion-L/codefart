@@ -1,18 +1,27 @@
 #!/bin/bash
 set -e
 
-BIN_PATH="/usr/local/bin/codefart"
+BIN_PATHS=(
+    "$HOME/.local/bin/codefart"
+    "/usr/local/bin/codefart"
+)
 CONFIG_DIR="$HOME/.config/codefart"
 SETTINGS="$HOME/.claude/settings.json"
 
 echo "Uninstalling CodeFart..."
 
 # Remove binary
-if [ -f "$BIN_PATH" ]; then
-    rm -f "$BIN_PATH" 2>/dev/null || sudo rm -f "$BIN_PATH"
-    echo "✓ Removed $BIN_PATH"
-else
-    echo "  Binary not found at $BIN_PATH"
+removed_binary=false
+for BIN_PATH in "${BIN_PATHS[@]}"; do
+    if [ -f "$BIN_PATH" ]; then
+        rm -f "$BIN_PATH" 2>/dev/null || sudo rm -f "$BIN_PATH"
+        echo "✓ Removed $BIN_PATH"
+        removed_binary=true
+    fi
+done
+
+if [ "$removed_binary" = false ]; then
+    echo "  Binary not found"
 fi
 
 # Remove config

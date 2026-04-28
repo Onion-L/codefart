@@ -3,7 +3,7 @@ set -e
 
 REPO="Onion-L/codefart"
 BIN_NAME="codefart"
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="${CODEFART_INSTALL_DIR:-$HOME/.local/bin}"
 
 # Detect OS and architecture
 OS=$(uname -s)
@@ -54,12 +54,9 @@ TMP_DIR=$(mktemp -d)
 curl -sL "$RELEASE_URL" | tar xz -C "$TMP_DIR"
 
 # Install
+mkdir -p "$INSTALL_DIR"
 echo "Installing to $INSTALL_DIR/$BIN_NAME..."
-if [ -w "$INSTALL_DIR" ]; then
-    mv "$TMP_DIR/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
-else
-    sudo mv "$TMP_DIR/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
-fi
+mv "$TMP_DIR/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
 chmod +x "$INSTALL_DIR/$BIN_NAME"
 
 # Cleanup
@@ -68,5 +65,19 @@ rm -rf "$TMP_DIR"
 echo ""
 echo "✓ CodeFart installed successfully!"
 echo ""
+case ":$PATH:" in
+    *":$INSTALL_DIR:"*) ;;
+    *)
+        echo "Add CodeFart to your PATH:"
+        echo "  export PATH=\"$INSTALL_DIR:\$PATH\""
+        echo ""
+        echo "For zsh:"
+        echo "  echo 'export PATH=\"$INSTALL_DIR:\$PATH\"' >> ~/.zshrc"
+        echo ""
+        echo "For bash:"
+        echo "  echo 'export PATH=\"$INSTALL_DIR:\$PATH\"' >> ~/.bashrc"
+        echo ""
+        ;;
+esac
 echo "To enable Claude notifications, run:"
 echo "  codefart setup"
