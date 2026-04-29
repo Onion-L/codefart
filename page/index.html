@@ -44,7 +44,7 @@
             :root {
                 --cream: #fffbeb;
                 --text: #1a1410;
-                --muted: rgba(26, 20, 16, 0.62);
+                --muted: #684f42;
                 --paper: #fffdf4;
                 --orange: #f05a28;
                 --pink: #ff7eb3;
@@ -457,13 +457,14 @@
                 text-align: center;
                 padding: 60px 0 40px;
                 font-size: 16px;
-                opacity: 0.5;
+                color: var(--muted);
                 position: relative;
                 z-index: 1;
             }
             footer a {
                 color: var(--text);
                 text-underline-offset: 3px;
+                text-decoration-thickness: 2px;
             }
             footer a:hover {
                 color: var(--orange);
