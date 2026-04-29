@@ -66,35 +66,8 @@ jobs:
           name: codefart-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/codefart-${{ matrix.target }}.zip
 
-  build-desktop:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install frontend deps
-        run: cd desktop && npm ci
-
-      - name: Build desktop app
-        run: cd desktop && npx tauri build --ci
-
-      - name: Upload DMG
-        uses: actions/upload-artifact@v4
-        with:
-          name: codefart-desktop-macos
-          path: target/release/bundle/dmg/*.dmg
-
   release:
-    needs: [build-cli, build-desktop]
+    needs: build-cli
     runs-on: ubuntu-latest
     permissions:
       contents: write
