@@ -2,6 +2,10 @@
 
 *Your AI finished thinking. It will let you know — loudly.*
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Onion-L/codefart/main/og-image.png" alt="CodeFart" width="600" />
+</p>
+
 CodeFart plays a fart sound when Claude Code finishes responding. Built on Claude's native hook system — zero wrapping, zero interception, zero trust issues.
 
 ## Install
