@@ -34,6 +34,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DMG=$(find desktop/target -path '*/bundle/dmg/*.dmg' -not -name '*.blockmap' | head -1)
+          DMG=$(find desktop/src-tauri/target -path '*/bundle/dmg/*.dmg' -not -name '*.blockmap' | head -1)
           echo "Found: $DMG"
           gh release upload ${{ inputs.tag }} "$DMG" --clobber
