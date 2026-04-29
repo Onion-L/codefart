@@ -48,7 +48,7 @@ body::before {
 #root {
     position: relative;
     z-index: 1;
-    padding: 32px 16px 16px;
+    padding: 48px 16px 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -66,8 +66,15 @@ body::before {
 }
 
 /* ── Drag region ── */
-[data-tauri-drag-region] {
+.drag-region {
+    position: fixed;
+    top: 0;
+    left: 72px;
+    right: 0;
+    height: 40px;
+    z-index: 10;
     -webkit-app-region: drag;
+    user-select: none;
 }
 
 /* ── Section Card ── */

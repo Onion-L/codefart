@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import "./App.css";
 import ThemePicker from "./components/ThemePicker";
@@ -22,10 +22,6 @@ function App() {
     const [notifyBody, setNotifyBody] = useState("已完成");
     const [autostart, setAutostart] = useState(false);
 
-    const handleDrag = useCallback(() => {
-        getCurrentWindow().startDragging();
-    }, []);
-
     const handlePreview = (_name: string) => {
         // TODO: invoke("preview_theme", { theme: name })
     };
@@ -37,9 +33,11 @@ function App() {
     return (
         <>
             <div
+                className="drag-region"
                 data-tauri-drag-region
-                style={{ height: 32, flexShrink: 0 }}
-                onMouseDown={handleDrag}
+                onMouseDown={() => {
+                    void getCurrentWindow().startDragging();
+                }}
             />
             {/* Notification */}
             <div className="section">
