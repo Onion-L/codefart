@@ -6,6 +6,7 @@ import ThemePicker from "./components/ThemePicker";
 import SoundUpload from "./components/SoundUpload";
 import NotificationPrefs from "./components/NotificationPrefs";
 import AutostartToggle from "./components/AutostartToggle";
+import HookSection from "./components/HookSection";
 
 interface ThemeInfo {
     name: string;
@@ -23,19 +24,16 @@ interface DesktopState {
     themes: ThemeInfo[];
 }
 
-type Tab = "sound" | "hook" | "notify" | "startup";
+type Tab = "sound" | "settings";
 
 const TABS: { key: Tab; icon: string; label: string }[] = [
     { key: "sound", icon: "🔊", label: "Sound" },
-    { key: "hook", icon: "🪝", label: "Hook" },
-    { key: "notify", icon: "🔔", label: "Notify" },
-    { key: "startup", icon: "⚡", label: "Startup" },
+    { key: "settings", icon: "⚙", label: "Settings" },
 ];
 
 function App() {
     const [activeTab, setActiveTab] = useState<Tab>("sound");
     const [state, setState] = useState<DesktopState | null>(null);
-    const [hookInstalling, setHookInstalling] = useState(false);
 
     const refresh = async () => {
         try {
@@ -82,13 +80,12 @@ function App() {
         after(() => invoke("clear_custom_sound"));
     };
 
-    const handleInstallHook = async () => {
-        setHookInstalling(true);
-        try {
-            await after(() => invoke("install_hook"));
-        } finally {
-            setHookInstalling(false);
-        }
+    const handleInstallHook = () => {
+        after(() => invoke("install_hook"));
+    };
+
+    const handleUninstallHook = () => {
+        after(() => invoke("uninstall_hook"));
     };
 
     const handleNotifyChange = (enabled: boolean, title: string, body: string) => {
@@ -141,52 +138,37 @@ function App() {
                     </div>
                 )}
 
-                {activeTab === "hook" && (
-                    <div className="section">
-                        <div className="row">
-                            <span className="row-label">Claude Code hook</span>
-                            <span className={`hook-status ${state.hook_installed ? "hook-ok" : "hook-missing"}`}>
-                                {state.hook_installed ? "✓ Installed" : "✗ Not installed"}
-                            </span>
+                {activeTab === "settings" && (
+                    <>
+                        <div className="section">
+                            <div className="setting-title">🪝 Claude Hook</div>
+                            <HookSection
+                                installed={state.hook_installed}
+                                onInstall={handleInstallHook}
+                                onUninstall={handleUninstallHook}
+                            />
                         </div>
-                        <p className="hook-desc">
-                            {state.hook_installed
-                                ? "Hook is in ~/.claude/settings.json. Claude will play a sound after responding."
-                                : "CodeFart needs to add a Stop hook to Claude's settings."}
-                        </p>
-                        {!state.hook_installed && (
-                            <button
-                                className="btn-primary"
-                                onClick={handleInstallHook}
-                                disabled={hookInstalling}
-                                style={{ marginTop: 12 }}
-                            >
-                                {hookInstalling ? "Installing..." : "Setup Hook"}
-                            </button>
-                        )}
-                    </div>
-                )}
 
-                {activeTab === "notify" && (
-                    <div className="section">
-                        <NotificationPrefs
-                            enabled={state.notification_enabled}
-                            title={state.notification_title}
-                            body={state.notification_body}
-                            onToggle={(enabled) => handleNotifyChange(enabled, state.notification_title, state.notification_body)}
-                            onTitleChange={(title) => handleNotifyChange(state.notification_enabled, title, state.notification_body)}
-                            onBodyChange={(body) => handleNotifyChange(state.notification_enabled, state.notification_title, body)}
-                        />
-                    </div>
-                )}
+                        <div className="section">
+                            <div className="setting-title">🔔 Notification</div>
+                            <NotificationPrefs
+                                enabled={state.notification_enabled}
+                                title={state.notification_title}
+                                body={state.notification_body}
+                                onToggle={(enabled) => handleNotifyChange(enabled, state.notification_title, state.notification_body)}
+                                onTitleChange={(title) => handleNotifyChange(state.notification_enabled, title, state.notification_body)}
+                                onBodyChange={(body) => handleNotifyChange(state.notification_enabled, state.notification_title, body)}
+                            />
+                        </div>
 
-                {activeTab === "startup" && (
-                    <div className="section">
-                        <AutostartToggle
-                            enabled={state.autostart}
-                            onToggle={handleAutostartToggle}
-                        />
-                    </div>
+                        <div className="section">
+                            <div className="setting-title">⚡ Startup</div>
+                            <AutostartToggle
+                                enabled={state.autostart}
+                                onToggle={handleAutostartToggle}
+                            />
+                        </div>
+                    </>
                 )}
             </div>
         </>

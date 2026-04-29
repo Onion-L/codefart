@@ -98,6 +98,7 @@ body::before {
 
 .tab {
     flex: 1;
+    max-width: 140px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,6 +140,18 @@ body::before {
     flex: 1;
     padding: 8px 12px 12px;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ── Setting section title ── */
+.setting-title {
+    font-family: "Fredoka", sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 10px;
 }
 
 /* ── Section Card ── */
@@ -162,22 +175,9 @@ body::before {
     font-size: 14px;
 }
 
-.row-help {
-    margin-top: 2px;
-    color: var(--muted);
-    font-size: 12px;
-}
-
-.hook-row {
-    align-items: flex-start;
-    gap: 12px;
-    padding-bottom: 12px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-}
-
-.hook-row .btn-primary {
-    flex-shrink: 0;
+/* ── Hook actions ── */
+.hook-actions {
+    margin-top: 12px;
 }
 
 /* ── Toggle Switch ── */
@@ -335,6 +335,13 @@ body::before {
 }
 .btn-ghost:hover {
     color: var(--orange);
+}
+
+.btn-danger {
+    color: #b42318;
+}
+.btn-danger:hover {
+    color: #8f1d15;
 }
 
 .upload-row {

@@ -56,6 +56,61 @@ pub fn has_codefart_hook(settings: &serde_json::Value) -> bool {
         .unwrap_or(false)
 }
 
+/// Remove CodeFart's Stop hook from Claude's settings.json.
+///
+/// Returns Ok(true) if hook was removed, Ok(false) if not present.
+pub fn uninstall_hook() -> Result<bool, CodefartError> {
+    let path = claude_settings_path();
+    if !path.exists() {
+        return Ok(false);
+    }
+    let content = std::fs::read_to_string(&path).map_err(CodefartError::ClaudeSettingsRead)?;
+    let mut settings: serde_json::Value =
+        serde_json::from_str(&content).map_err(CodefartError::ClaudeSettingsParse)?;
+
+    let hooks_obj = match settings.get_mut("hooks") {
+        Some(h) => h,
+        None => return Ok(false),
+    };
+    let stop_arr = match hooks_obj.get_mut("Stop").and_then(|s| s.as_array_mut()) {
+        Some(arr) => arr,
+        None => return Ok(false),
+    };
+
+    let before = stop_arr.len();
+    stop_arr.retain(|entry| {
+        !entry
+            .get("hooks")
+            .and_then(|h| h.as_array())
+            .map(|hooks| {
+                hooks.iter().any(|h| {
+                    h.get("command").and_then(|c| c.as_str()) == Some("codefart play")
+                })
+            })
+            .unwrap_or(false)
+    });
+
+    if stop_arr.len() == before {
+        return Ok(false);
+    }
+
+    // Clean up empty Stop / hooks objects
+    if stop_arr.is_empty()
+        && let Some(obj) = hooks_obj.as_object_mut()
+    {
+        obj.remove("Stop");
+        if obj.is_empty()
+            && let Some(root) = settings.as_object_mut()
+        {
+            root.remove("hooks");
+        }
+    }
+
+    let content = serde_json::to_string_pretty(&settings)?;
+    std::fs::write(&path, content).map_err(CodefartError::ClaudeSettingsWrite)?;
+    Ok(true)
+}
+
 /// Inject the CodeFart Stop hook into Claude's settings.json.
 ///
 /// Returns Ok(true) if hook was added, Ok(false) if already present.

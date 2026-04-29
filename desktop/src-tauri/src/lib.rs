@@ -91,6 +91,12 @@ fn install_hook(app: AppHandle) -> Result<DesktopState, String> {
 }
 
 #[tauri::command]
+fn uninstall_hook(app: AppHandle) -> Result<DesktopState, String> {
+    codefart_core::setup::uninstall_hook().map_err(command_err)?;
+    desktop_state(&app)
+}
+
+#[tauri::command]
 fn set_notification_preferences(
     app: AppHandle,
     enabled: bool,
@@ -135,6 +141,7 @@ pub fn run() {
             set_custom_sound,
             clear_custom_sound,
             install_hook,
+            uninstall_hook,
             set_notification_preferences,
             set_autostart,
         ])
