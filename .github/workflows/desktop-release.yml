@@ -30,20 +30,10 @@ jobs:
       - name: Build desktop app (universal)
         run: cd desktop && npx tauri build --ci --target universal-apple-darwin
 
-      - name: Locate and upload DMG
-        run: |
-          DMG=$(find desktop/target -path '*/bundle/dmg/*.dmg' -not -name '*.blockmap' | head -1)
-          echo "Found: $DMG"
-          cp "$DMG" ./CodeFart-macOS.dmg
-
-      - name: Upload DMG artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: codefart-desktop-macos
-          path: CodeFart-macOS.dmg
-
-      - name: Attach DMG to release
+      - name: Locate and attach DMG to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ inputs.tag }} CodeFart-macOS.dmg --clobber
+          DMG=$(find desktop/target -path '*/bundle/dmg/*.dmg' -not -name '*.blockmap' | head -1)
+          echo "Found: $DMG"
+          gh release upload ${{ inputs.tag }} "$DMG" --clobber
