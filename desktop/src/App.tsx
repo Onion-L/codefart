@@ -28,7 +28,7 @@ type Tab = "sound" | "settings";
 
 const TABS: { key: Tab; icon: string; label: string }[] = [
     { key: "sound", icon: "🔊", label: "Sound" },
-    { key: "settings", icon: "⚙", label: "Settings" },
+    { key: "settings", icon: "🔧", label: "Settings" },
 ];
 
 function App() {
