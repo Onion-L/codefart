@@ -1,9 +1,12 @@
 name: Desktop Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to attach DMG to (e.g. v0.2.20)'
+        required: true
+        type: string
 
 jobs:
   build-desktop:
@@ -27,8 +30,20 @@ jobs:
       - name: Build desktop app (universal)
         run: cd desktop && npx tauri build --ci --target universal-apple-darwin
 
+      - name: Locate and upload DMG
+        run: |
+          DMG=$(find desktop/target -path '*/bundle/dmg/*.dmg' -not -name '*.blockmap' | head -1)
+          echo "Found: $DMG"
+          cp "$DMG" ./CodeFart-macOS.dmg
+
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
           name: codefart-desktop-macos
-          path: desktop/target/**/bundle/dmg/*.dmg
+          path: CodeFart-macOS.dmg
+
+      - name: Attach DMG to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ inputs.tag }} CodeFart-macOS.dmg --clobber
