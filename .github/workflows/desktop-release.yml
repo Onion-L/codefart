@@ -13,14 +13,26 @@ permissions:
 
 jobs:
   build-desktop:
+    name: Build desktop (${{ matrix.label }})
     runs-on: macos-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Apple Silicon
+            target: aarch64-apple-darwin
+            suffix: apple-silicon
+          - label: Intel
+            target: x86_64-apple-darwin
+            suffix: intel
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: ${{ matrix.target }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -46,24 +58,50 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/private_keys"
           echo "$APPLE_API_KEY_P8_BASE64" | base64 -D > "$GITHUB_WORKSPACE/private_keys/AuthKey_${APPLE_API_KEY}.p8"
 
-      - name: Build desktop app (universal)
+      - name: Build signed desktop app (${{ matrix.label }})
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: cd desktop && npx tauri build --ci --target ${{ matrix.target }}
+
+      - name: Locate DMG
+        id: dmg
+        run: |
+          DMG=$(find target/${{ matrix.target }}/release/bundle/dmg -name '*.dmg' -not -name '*.blockmap' | head -1)
+          echo "Found: $DMG"
+          if [ -z "$DMG" ]; then
+            echo "No DMG found for ${{ matrix.target }}"
+            find target/${{ matrix.target }} -maxdepth 6 -type f \( -name '*.dmg' -o -name '*.blockmap' \) -print
+            exit 1
+          fi
+          VERSION="${{ inputs.tag }}"
+          VERSION="${VERSION#v}"
+          RENAMED="$(dirname "$DMG")/CodeFart_${VERSION}-${{ matrix.suffix }}.dmg"
+          mv "$DMG" "$RENAMED"
+          DMG="$RENAMED"
+          echo "Renamed: $DMG"
+          echo "path=$DMG" >> "$GITHUB_OUTPUT"
+
+      - name: Notarize DMG
+        timeout-minutes: 35
+        env:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_PATH: ${{ github.workspace }}/private_keys/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
-        run: cd desktop && npx tauri build --ci --target universal-apple-darwin
+        run: |
+          xcrun notarytool submit "${{ steps.dmg.outputs.path }}" \
+            --key "$APPLE_API_KEY_PATH" \
+            --key-id "$APPLE_API_KEY" \
+            --issuer "$APPLE_API_ISSUER" \
+            --wait \
+            --timeout 30m \
+            --output-format normal
+          xcrun stapler staple -v "${{ steps.dmg.outputs.path }}"
+          xcrun stapler validate -v "${{ steps.dmg.outputs.path }}"
 
-      - name: Locate and attach DMG to release
+      - name: Attach DMG to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DMG=$(find target -path '*/bundle/dmg/*.dmg' -not -name '*.blockmap' | head -1)
-          echo "Found: $DMG"
-          if [ -z "$DMG" ]; then
-            echo "No DMG found under target/"
-            find target -maxdepth 6 -type f \( -name '*.dmg' -o -name '*.blockmap' \) -print
-            exit 1
-          fi
+          DMG="${{ steps.dmg.outputs.path }}"
           gh release upload "${{ inputs.tag }}" "$DMG" --clobber
