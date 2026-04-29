@@ -14,7 +14,16 @@ const THEMES = [
     { name: "thunder", desc: "For long CI runs" },
 ];
 
+type Tab = "sound" | "notify" | "startup";
+
+const TABS: { key: Tab; icon: string; label: string }[] = [
+    { key: "sound", icon: "🔊", label: "Sound" },
+    { key: "notify", icon: "🔔", label: "Notify" },
+    { key: "startup", icon: "⚡", label: "Startup" },
+];
+
 function App() {
+    const [activeTab, setActiveTab] = useState<Tab>("sound");
     const [theme, setTheme] = useState("classic");
     const [customSound, setCustomSound] = useState<string | null>(null);
     const [notifyEnabled, setNotifyEnabled] = useState(true);
@@ -39,42 +48,60 @@ function App() {
                     void getCurrentWindow().startDragging();
                 }}
             />
-            {/* Notification */}
-            <div className="section">
-                <div className="section-title">🔔 Notification</div>
-                <NotificationPrefs
-                    enabled={notifyEnabled}
-                    title={notifyTitle}
-                    body={notifyBody}
-                    onToggle={setNotifyEnabled}
-                    onTitleChange={setNotifyTitle}
-                    onBodyChange={setNotifyBody}
-                />
+
+            {/* Tab bar */}
+            <div className="tab-bar">
+                {TABS.map((tab) => (
+                    <button
+                        key={tab.key}
+                        className={`tab ${activeTab === tab.key ? "tab-active" : ""}`}
+                        onClick={() => setActiveTab(tab.key)}
+                    >
+                        <span className="tab-icon">{tab.icon}</span>
+                        <span className="tab-label">{tab.label}</span>
+                    </button>
+                ))}
             </div>
 
-            {/* Sound */}
-            <div className="section">
-                <div className="section-title">🔊 Sound</div>
-                <ThemePicker
-                    themes={THEMES}
-                    current={theme}
-                    onSelect={setTheme}
-                    onPreview={handlePreview}
-                />
-                <SoundUpload
-                    customSound={customSound}
-                    onUpload={handleUpload}
-                    onClear={() => setCustomSound(null)}
-                />
-            </div>
+            {/* Content */}
+            <div className="tab-content">
+                {activeTab === "sound" && (
+                    <div className="section">
+                        <ThemePicker
+                            themes={THEMES}
+                            current={theme}
+                            onSelect={setTheme}
+                            onPreview={handlePreview}
+                        />
+                        <SoundUpload
+                            customSound={customSound}
+                            onUpload={handleUpload}
+                            onClear={() => setCustomSound(null)}
+                        />
+                    </div>
+                )}
 
-            {/* Autostart */}
-            <div className="section">
-                <div className="section-title">⚡ Startup</div>
-                <AutostartToggle
-                    enabled={autostart}
-                    onToggle={setAutostart}
-                />
+                {activeTab === "notify" && (
+                    <div className="section">
+                        <NotificationPrefs
+                            enabled={notifyEnabled}
+                            title={notifyTitle}
+                            body={notifyBody}
+                            onToggle={setNotifyEnabled}
+                            onTitleChange={setNotifyTitle}
+                            onBodyChange={setNotifyBody}
+                        />
+                    </div>
+                )}
+
+                {activeTab === "startup" && (
+                    <div className="section">
+                        <AutostartToggle
+                            enabled={autostart}
+                            onToggle={setAutostart}
+                        />
+                    </div>
+                )}
             </div>
         </>
     );

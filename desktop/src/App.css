@@ -48,12 +48,11 @@ body::before {
 #root {
     position: relative;
     z-index: 1;
-    padding: 48px 16px 16px;
+    padding: 36px 0 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
     height: 100vh;
+    overflow: hidden;
 }
 
 [data-tauri-drag-region] {
@@ -77,6 +76,59 @@ body::before {
     user-select: none;
 }
 
+/* ── Tab bar ── */
+.tab-bar {
+    display: flex;
+    padding: 4px 12px;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 4px;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    cursor: pointer;
+    font-family: "Fredoka", sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    transition: all 0.15s;
+}
+
+.tab:hover {
+    color: var(--text);
+    background: var(--paper);
+}
+
+.tab-active {
+    background: var(--paper);
+    color: var(--text);
+    border-color: var(--orange);
+    box-shadow: 2px 2px 0 var(--shadow);
+    transform: rotate(-0.3deg);
+}
+
+.tab-icon {
+    font-size: 14px;
+}
+
+.tab-label {
+    font-weight: 600;
+}
+
+/* ── Tab content ── */
+.tab-content {
+    flex: 1;
+    padding: 8px 12px 12px;
+    overflow-y: auto;
+}
+
 /* ── Section Card ── */
 .section {
     background: var(--paper);
@@ -84,14 +136,6 @@ body::before {
     border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
     padding: 16px;
     box-shadow: 4px 4px 0 var(--shadow);
-}
-
-.section-title {
-    font-family: "Fredoka", sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 10px;
 }
 
 /* ── Row ── */

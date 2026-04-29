@@ -15,7 +15,7 @@
         "title": "CodeFart",
         "width": 400,
         "height": 480,
-        "resizable": false,
+        "resizable": true,
         "visible": true
       }
     ],
