@@ -1,12 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./App.css";
 import ThemePicker from "./components/ThemePicker";
 import SoundUpload from "./components/SoundUpload";
 import NotificationPrefs from "./components/NotificationPrefs";
 import AutostartToggle from "./components/AutostartToggle";
 
-const THEMES = [
+interface Theme {
+    name: string;
+    desc: string;
+}
+
+interface DesktopState {
+    theme: string;
+    custom_sound: string | null;
+    hook_installed: boolean;
+    autostart: boolean;
+    themes: Theme[];
+}
+
+const FALLBACK_THEMES: Theme[] = [
     { name: "classic", desc: "The signature sound" },
     { name: "wet", desc: "A wetter variant" },
     { name: "tiny", desc: "Small & polite" },
@@ -24,19 +39,92 @@ const TABS: { key: Tab; icon: string; label: string }[] = [
 
 function App() {
     const [activeTab, setActiveTab] = useState<Tab>("sound");
+    const [themes, setThemes] = useState<Theme[]>(FALLBACK_THEMES);
     const [theme, setTheme] = useState("classic");
     const [customSound, setCustomSound] = useState<string | null>(null);
     const [notifyEnabled, setNotifyEnabled] = useState(true);
     const [notifyTitle, setNotifyTitle] = useState("Claude");
     const [notifyBody, setNotifyBody] = useState("已完成");
     const [autostart, setAutostart] = useState(false);
+    const [hookInstalled, setHookInstalled] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handlePreview = (_name: string) => {
-        // TODO: invoke("preview_theme", { theme: name })
+    const applyState = (state: DesktopState) => {
+        setTheme(state.theme);
+        setCustomSound(state.custom_sound);
+        setHookInstalled(state.hook_installed);
+        setAutostart(state.autostart);
+        setThemes(state.themes);
+    };
+
+    const runAction = async (action: () => Promise<void>) => {
+        setError(null);
+        try {
+            await action();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        }
+    };
+
+    useEffect(() => {
+        void runAction(async () => {
+            applyState(await invoke<DesktopState>("get_state"));
+        });
+    }, []);
+
+    const handleThemeSelect = (name: string) => {
+        void runAction(async () => {
+            applyState(await invoke<DesktopState>("set_theme", { theme: name }));
+        });
+    };
+
+    const handlePreview = (name: string) => {
+        void runAction(async () => {
+            await invoke("preview_theme", { theme: name });
+        });
     };
 
     const handleUpload = () => {
-        // TODO: invoke("upload_sound")
+        void runAction(async () => {
+            const selected = await open({
+                multiple: false,
+                directory: false,
+                filters: [
+                    {
+                        name: "Audio",
+                        extensions: ["wav", "mp3", "flac", "ogg", "m4a"],
+                    },
+                ],
+            });
+
+            if (typeof selected !== "string") {
+                return;
+            }
+
+            applyState(
+                await invoke<DesktopState>("set_custom_sound", { path: selected }),
+            );
+        });
+    };
+
+    const handleClearSound = () => {
+        void runAction(async () => {
+            applyState(await invoke<DesktopState>("clear_custom_sound"));
+        });
+    };
+
+    const handleInstallHook = () => {
+        void runAction(async () => {
+            applyState(await invoke<DesktopState>("install_hook"));
+        });
+    };
+
+    const handleAutostart = (enabled: boolean) => {
+        void runAction(async () => {
+            applyState(
+                await invoke<DesktopState>("set_autostart", { enabled }),
+            );
+        });
     };
 
     return (
@@ -48,6 +136,8 @@ function App() {
                     void getCurrentWindow().startDragging();
                 }}
             />
+
+            {error && <div className="error-banner">{error}</div>}
 
             {/* Tab bar */}
             <div className="tab-bar">
@@ -68,21 +158,37 @@ function App() {
                 {activeTab === "sound" && (
                     <div className="section">
                         <ThemePicker
-                            themes={THEMES}
+                            themes={themes}
                             current={theme}
-                            onSelect={setTheme}
+                            onSelect={handleThemeSelect}
                             onPreview={handlePreview}
                         />
                         <SoundUpload
                             customSound={customSound}
                             onUpload={handleUpload}
-                            onClear={() => setCustomSound(null)}
+                            onClear={handleClearSound}
                         />
                     </div>
                 )}
 
                 {activeTab === "notify" && (
                     <div className="section">
+                        <div className="row hook-row">
+                            <div>
+                                <span className="row-label">Claude Code hook</span>
+                                <p className="row-help">
+                                    {hookInstalled
+                                        ? "Installed in ~/.claude/settings.json"
+                                        : "Run setup to enable completion alerts"}
+                                </p>
+                            </div>
+                            <button
+                                className="btn-primary"
+                                onClick={handleInstallHook}
+                            >
+                                {hookInstalled ? "Installed" : "Setup"}
+                            </button>
+                        </div>
                         <NotificationPrefs
                             enabled={notifyEnabled}
                             title={notifyTitle}
@@ -98,7 +204,7 @@ function App() {
                     <div className="section">
                         <AutostartToggle
                             enabled={autostart}
-                            onToggle={setAutostart}
+                            onToggle={handleAutostart}
                         />
                     </div>
                 )}

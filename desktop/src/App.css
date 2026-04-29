@@ -64,6 +64,18 @@ body::before {
     color: var(--text);
 }
 
+.error-banner {
+    margin: 0 12px 4px;
+    padding: 7px 10px;
+    border: 2px solid #b42318;
+    border-radius: 10px 4px 10px 4px;
+    background: #fff1ef;
+    color: #8f1d15;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 2px 2px 0 rgba(180, 35, 24, 0.12);
+}
+
 /* ── Drag region ── */
 .drag-region {
     position: fixed;
@@ -148,6 +160,24 @@ body::before {
 
 .row-label {
     font-size: 14px;
+}
+
+.row-help {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.hook-row {
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.hook-row .btn-primary {
+    flex-shrink: 0;
 }
 
 /* ── Toggle Switch ── */
