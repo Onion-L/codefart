@@ -31,7 +31,7 @@ export default function NotificationPrefs({
                             className="input"
                             value={title}
                             onChange={(e) => onTitleChange(e.target.value)}
-                            placeholder="Claude"
+                            placeholder="💨 It's done"
                         />
                     </div>
                     <div className="input-row">
@@ -40,7 +40,7 @@ export default function NotificationPrefs({
                             className="input"
                             value={body}
                             onChange={(e) => onBodyChange(e.target.value)}
-                            placeholder="已完成"
+                            placeholder="Your AI ripped one. Come back."
                         />
                     </div>
                 </>
