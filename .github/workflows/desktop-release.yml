@@ -34,6 +34,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DMG=$(find desktop/src-tauri/target -path '*/bundle/dmg/*.dmg' -not -name '*.blockmap' | head -1)
+          DMG=$(find target -path '*/bundle/dmg/*.dmg' -not -name '*.blockmap' | head -1)
           echo "Found: $DMG"
-          gh release upload ${{ inputs.tag }} "$DMG" --clobber
+          if [ -z "$DMG" ]; then
+            echo "No DMG found under target/"
+            find target -maxdepth 6 -type f \( -name '*.dmg' -o -name '*.blockmap' \) -print
+            exit 1
+          fi
+          gh release upload "${{ inputs.tag }}" "$DMG" --clobber
