@@ -321,6 +321,14 @@
                 transform: translateY(-6px) rotate(2deg);
                 box-shadow: 8px 9px 0 rgba(89, 46, 21, 0.12);
             }
+            .balloon-soon {
+                opacity: 0.5;
+                cursor: default;
+            }
+            .balloon-soon:hover {
+                transform: none;
+                box-shadow: 5px 5px 0 rgba(89, 46, 21, 0.1);
+            }
             .balloon .icon {
                 font-size: 40px;
                 display: block;
@@ -584,41 +592,6 @@
 
             <div class="arrow-doodle" aria-hidden="true">👇</div>
 
-            <!-- DESKTOP APP -->
-            <section class="panel" style="text-align:center; margin-top: 80px;">
-                <div class="bubble" style="margin-bottom: 20px">
-                    Prefer buttons over terminals?
-                </div>
-                <a
-                    href="https://github.com/Onion-L/codefart/releases/latest"
-                    style="
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 10px;
-                        background: var(--text);
-                        color: #fff;
-                        font-family: 'Fredoka', sans-serif;
-                        font-size: 20px;
-                        font-weight: 700;
-                        padding: 14px 32px;
-                        border-radius: 99px;
-                        text-decoration: none;
-                        transform: rotate(-0.5deg);
-                        box-shadow: 4px 4px 0 var(--shadow);
-                        transition: transform 0.16s, box-shadow 0.16s;
-                    "
-                    onmouseover="this.style.transform='rotate(1deg) scale(1.05)'"
-                    onmouseout="this.style.transform='rotate(-0.5deg)'"
-                    onmousedown="this.style.transform='scale(0.95)';this.style.boxShadow='none'"
-                >
-                    <span style="font-size:24px">🍎</span>
-                    Download for macOS
-                </a>
-                <p class="helper">
-                    Tray icon · theme picker · notifications · auto-start
-                </p>
-            </section>
-
             <!-- HOW -->
             <section class="panel">
                 <span class="big-number">1.</span>
@@ -729,6 +702,35 @@
                         ><span class="desc">wrap any cmd</span>
                     </div>
                 </div>
+            </section>
+
+            <!-- DESKTOP APP -->
+            <section class="panel">
+                <h2 class="section-title">Prefer a real app?</h2>
+                <div class="balloons">
+                    <a
+                        class="balloon"
+                        href="https://github.com/Onion-L/codefart/releases/latest"
+                        style="text-decoration: none; color: inherit;"
+                    >
+                        <span class="icon">🍎</span>
+                        <h3>macOS</h3>
+                        <p>Download DMG →</p>
+                    </a>
+                    <div class="balloon balloon-soon">
+                        <span class="icon">🪟</span>
+                        <h3>Windows</h3>
+                        <p>Coming soon</p>
+                    </div>
+                    <div class="balloon balloon-soon">
+                        <span class="icon">🐧</span>
+                        <h3>Linux</h3>
+                        <p>Coming soon</p>
+                    </div>
+                </div>
+                <p class="helper" style="text-align:center;">
+                    Tray icon · theme picker · notifications · auto-start
+                </p>
             </section>
 
             <!-- CTA -->
