@@ -37,12 +37,12 @@ body::before {
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.28;
+    opacity: 0.6;
     background-image: radial-gradient(
-        rgba(26, 20, 16, 0.12) 1px,
+        rgba(26, 20, 16, 0.15) 1.2px,
         transparent 1px
     );
-    background-size: 14px 14px;
+    background-size: 16px 16px;
 }
 
 #root {
