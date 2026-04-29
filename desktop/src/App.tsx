@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { open } from "@tauri-apps/plugin-dialog";
 import "./App.css";
 import ThemePicker from "./components/ThemePicker";
 import SoundUpload from "./components/SoundUpload";
 import NotificationPrefs from "./components/NotificationPrefs";
 import AutostartToggle from "./components/AutostartToggle";
 
-interface Theme {
+interface ThemeInfo {
     name: string;
     desc: string;
 }
@@ -21,148 +20,86 @@ interface DesktopState {
     notification_body: string;
     hook_installed: boolean;
     autostart: boolean;
-    themes: Theme[];
+    themes: ThemeInfo[];
 }
 
-const FALLBACK_THEMES: Theme[] = [
-    { name: "classic", desc: "The signature sound" },
-    { name: "wet", desc: "A wetter variant" },
-    { name: "tiny", desc: "Small & polite" },
-    { name: "squeaky", desc: "High-pitched" },
-    { name: "thunder", desc: "For long CI runs" },
-];
-
-type Tab = "sound" | "notify" | "startup";
+type Tab = "sound" | "hook" | "notify" | "startup";
 
 const TABS: { key: Tab; icon: string; label: string }[] = [
     { key: "sound", icon: "🔊", label: "Sound" },
+    { key: "hook", icon: "🪝", label: "Hook" },
     { key: "notify", icon: "🔔", label: "Notify" },
     { key: "startup", icon: "⚡", label: "Startup" },
 ];
 
 function App() {
     const [activeTab, setActiveTab] = useState<Tab>("sound");
-    const [themes, setThemes] = useState<Theme[]>(FALLBACK_THEMES);
-    const [theme, setTheme] = useState("classic");
-    const [customSound, setCustomSound] = useState<string | null>(null);
-    const [notifyEnabled, setNotifyEnabled] = useState(false);
-    const [notifyTitle, setNotifyTitle] = useState("Claude");
-    const [notifyBody, setNotifyBody] = useState("已完成");
-    const [autostart, setAutostart] = useState(false);
-    const [hookInstalled, setHookInstalled] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [state, setState] = useState<DesktopState | null>(null);
+    const [hookInstalling, setHookInstalling] = useState(false);
 
-    const applyState = (state: DesktopState) => {
-        setTheme(state.theme);
-        setCustomSound(state.custom_sound);
-        setNotifyEnabled(state.notification_enabled);
-        setNotifyTitle(state.notification_title);
-        setNotifyBody(state.notification_body);
-        setHookInstalled(state.hook_installed);
-        setAutostart(state.autostart);
-        setThemes(state.themes);
-    };
-
-    const runAction = async (action: () => Promise<void>) => {
-        setError(null);
+    const refresh = async () => {
         try {
-            await action();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : String(err));
+            const s = await invoke<DesktopState>("get_state");
+            setState(s);
+        } catch (e) {
+            console.error("get_state failed:", e);
         }
     };
 
     useEffect(() => {
-        void runAction(async () => {
-            applyState(await invoke<DesktopState>("get_state"));
-        });
+        refresh();
     }, []);
 
-    const handleThemeSelect = (name: string) => {
-        void runAction(async () => {
-            applyState(await invoke<DesktopState>("set_theme", { theme: name }));
-        });
+    const after = async (fn: () => Promise<void>) => {
+        await fn();
+        await refresh();
     };
 
-    const handlePreview = (name: string) => {
-        void runAction(async () => {
-            await invoke("preview_theme", { theme: name });
-        });
+    const handleSelectTheme = (theme: string) => {
+        after(() => invoke("set_theme", { theme }));
     };
 
-    const handleUpload = () => {
-        void runAction(async () => {
+    const handlePreview = (theme: string) => {
+        invoke("preview_theme", { theme });
+    };
+
+    const handleUploadSound = async () => {
+        try {
+            const { open } = await import("@tauri-apps/plugin-dialog");
             const selected = await open({
                 multiple: false,
-                directory: false,
-                filters: [
-                    {
-                        name: "Audio",
-                        extensions: ["wav", "mp3", "flac", "ogg", "m4a"],
-                    },
-                ],
+                filters: [{ name: "Audio", extensions: ["wav", "mp3", "flac", "ogg", "aiff", "m4a"] }],
             });
-
-            if (typeof selected !== "string") {
-                return;
+            if (selected) {
+                await after(() => invoke("set_custom_sound", { path: selected }));
             }
-
-            applyState(
-                await invoke<DesktopState>("set_custom_sound", { path: selected }),
-            );
-        });
+        } catch (e) {
+            console.error("upload sound failed:", e);
+        }
     };
 
     const handleClearSound = () => {
-        void runAction(async () => {
-            applyState(await invoke<DesktopState>("clear_custom_sound"));
-        });
+        after(() => invoke("clear_custom_sound"));
     };
 
-    const handleInstallHook = () => {
-        void runAction(async () => {
-            applyState(await invoke<DesktopState>("install_hook"));
-        });
+    const handleInstallHook = async () => {
+        setHookInstalling(true);
+        try {
+            await after(() => invoke("install_hook"));
+        } finally {
+            setHookInstalling(false);
+        }
     };
 
-    const saveNotificationPreferences = (
-        enabled: boolean,
-        title: string,
-        body: string,
-    ) => {
-        void runAction(async () => {
-            applyState(
-                await invoke<DesktopState>("set_notification_preferences", {
-                    enabled,
-                    title,
-                    body,
-                }),
-            );
-        });
+    const handleNotifyChange = (enabled: boolean, title: string, body: string) => {
+        after(() => invoke("set_notification_preferences", { enabled, title, body }));
     };
 
-    const handleNotificationToggle = (enabled: boolean) => {
-        setNotifyEnabled(enabled);
-        saveNotificationPreferences(enabled, notifyTitle, notifyBody);
+    const handleAutostartToggle = (enabled: boolean) => {
+        after(() => invoke("set_autostart", { enabled }));
     };
 
-    const handleNotificationTitle = (title: string) => {
-        setNotifyTitle(title);
-        saveNotificationPreferences(notifyEnabled, title, notifyBody);
-    };
-
-    const handleNotificationBody = (body: string) => {
-        setNotifyBody(body);
-        saveNotificationPreferences(notifyEnabled, notifyTitle, body);
-    };
-
-    const handleAutostart = (enabled: boolean) => {
-        void runAction(async () => {
-            applyState(
-                await invoke<DesktopState>("set_autostart", { enabled }),
-            );
-        });
-    };
+    if (!state) return null;
 
     return (
         <>
@@ -174,9 +111,6 @@ function App() {
                 }}
             />
 
-            {error && <div className="error-banner">{error}</div>}
-
-            {/* Tab bar */}
             <div className="tab-bar">
                 {TABS.map((tab) => (
                     <button
@@ -190,49 +124,58 @@ function App() {
                 ))}
             </div>
 
-            {/* Content */}
             <div className="tab-content">
                 {activeTab === "sound" && (
                     <div className="section">
                         <ThemePicker
-                            themes={themes}
-                            current={theme}
-                            onSelect={handleThemeSelect}
+                            themes={state.themes}
+                            current={state.theme}
+                            onSelect={handleSelectTheme}
                             onPreview={handlePreview}
                         />
                         <SoundUpload
-                            customSound={customSound}
-                            onUpload={handleUpload}
+                            customSound={state.custom_sound}
+                            onUpload={handleUploadSound}
                             onClear={handleClearSound}
                         />
                     </div>
                 )}
 
-                {activeTab === "notify" && (
+                {activeTab === "hook" && (
                     <div className="section">
-                        <div className="row hook-row">
-                            <div>
-                                <span className="row-label">Claude Code hook</span>
-                                <p className="row-help">
-                                    {hookInstalled
-                                        ? "Installed in ~/.claude/settings.json"
-                                        : "Run setup to enable completion alerts"}
-                                </p>
-                            </div>
+                        <div className="row">
+                            <span className="row-label">Claude Code hook</span>
+                            <span className={`hook-status ${state.hook_installed ? "hook-ok" : "hook-missing"}`}>
+                                {state.hook_installed ? "✓ Installed" : "✗ Not installed"}
+                            </span>
+                        </div>
+                        <p className="hook-desc">
+                            {state.hook_installed
+                                ? "Hook is in ~/.claude/settings.json. Claude will play a sound after responding."
+                                : "CodeFart needs to add a Stop hook to Claude's settings."}
+                        </p>
+                        {!state.hook_installed && (
                             <button
                                 className="btn-primary"
                                 onClick={handleInstallHook}
+                                disabled={hookInstalling}
+                                style={{ marginTop: 12 }}
                             >
-                                {hookInstalled ? "Installed" : "Setup"}
+                                {hookInstalling ? "Installing..." : "Setup Hook"}
                             </button>
-                        </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === "notify" && (
+                    <div className="section">
                         <NotificationPrefs
-                            enabled={notifyEnabled}
-                            title={notifyTitle}
-                            body={notifyBody}
-                            onToggle={handleNotificationToggle}
-                            onTitleChange={handleNotificationTitle}
-                            onBodyChange={handleNotificationBody}
+                            enabled={state.notification_enabled}
+                            title={state.notification_title}
+                            body={state.notification_body}
+                            onToggle={(enabled) => handleNotifyChange(enabled, state.notification_title, state.notification_body)}
+                            onTitleChange={(title) => handleNotifyChange(state.notification_enabled, title, state.notification_body)}
+                            onBodyChange={(body) => handleNotifyChange(state.notification_enabled, state.notification_title, body)}
                         />
                     </div>
                 )}
@@ -240,8 +183,8 @@ function App() {
                 {activeTab === "startup" && (
                     <div className="section">
                         <AutostartToggle
-                            enabled={autostart}
-                            onToggle={handleAutostart}
+                            enabled={state.autostart}
+                            onToggle={handleAutostartToggle}
                         />
                     </div>
                 )}
