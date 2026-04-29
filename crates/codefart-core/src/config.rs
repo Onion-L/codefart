@@ -12,6 +12,9 @@ pub const BUILTIN_THEMES: &[(&str, &str)] = &[
     ("thunder", "For those long CI runs"),
 ];
 
+pub const DEFAULT_NOTIFICATION_TITLE: &str = "Claude";
+pub const DEFAULT_NOTIFICATION_BODY: &str = "已完成";
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     /// Currently selected built-in theme (e.g. "classic", "wet")
@@ -20,6 +23,15 @@ pub struct Config {
     /// Path to a custom sound file (overrides theme)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_sound: Option<String>,
+    /// Whether to show a macOS notification after playback.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub notification_enabled: Option<bool>,
+    /// Notification title used by the Claude Code hook.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub notification_title: Option<String>,
+    /// Notification body used by the Claude Code hook.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub notification_body: Option<String>,
 }
 
 impl Config {
@@ -109,6 +121,32 @@ impl Config {
             let _ = std::fs::remove_dir_all(&sounds_dir);
         }
     }
+
+    /// Returns true when macOS notifications are enabled.
+    pub fn notification_enabled(&self) -> bool {
+        self.notification_enabled.unwrap_or(false)
+    }
+
+    /// Get the configured notification title.
+    pub fn notification_title(&self) -> &str {
+        self.notification_title
+            .as_deref()
+            .unwrap_or(DEFAULT_NOTIFICATION_TITLE)
+    }
+
+    /// Get the configured notification body.
+    pub fn notification_body(&self) -> &str {
+        self.notification_body
+            .as_deref()
+            .unwrap_or(DEFAULT_NOTIFICATION_BODY)
+    }
+
+    /// Set notification preferences used by `codefart play`.
+    pub fn set_notification_preferences(&mut self, enabled: bool, title: &str, body: &str) {
+        self.notification_enabled = Some(enabled);
+        self.notification_title = Some(title.to_string());
+        self.notification_body = Some(body.to_string());
+    }
 }
 
 #[cfg(test)]
@@ -132,5 +170,25 @@ mod tests {
         config.set_theme("wet").unwrap();
 
         assert_eq!(config.theme.as_deref(), Some("wet"));
+    }
+
+    #[test]
+    fn notification_defaults_are_safe_for_existing_cli_users() {
+        let config = Config::default();
+
+        assert!(!config.notification_enabled());
+        assert_eq!(config.notification_title(), "Claude");
+        assert_eq!(config.notification_body(), "已完成");
+    }
+
+    #[test]
+    fn set_notification_preferences_stores_values() {
+        let mut config = Config::default();
+
+        config.set_notification_preferences(true, "CodeFart", "Done");
+
+        assert!(config.notification_enabled());
+        assert_eq!(config.notification_title(), "CodeFart");
+        assert_eq!(config.notification_body(), "Done");
     }
 }

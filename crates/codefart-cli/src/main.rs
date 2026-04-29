@@ -42,7 +42,13 @@ fn main() {
 
 fn cmd_play() -> Result<(), CodefartError> {
     let config = Config::load()?;
-    codefart_core::audio::play_sound(&config)?;
+    play_completion_alert(&config)?;
+    Ok(())
+}
+
+fn play_completion_alert(config: &Config) -> Result<(), CodefartError> {
+    codefart_core::audio::play_sound(config)?;
+    let _ = codefart_core::notification::notify_completion(config);
     Ok(())
 }
 
@@ -220,7 +226,7 @@ fn cmd_run(args: &[String]) -> Result<(), CodefartError> {
 
     // Play sound regardless of exit code (audio errors are silent)
     let config = Config::load().unwrap_or_default();
-    let _ = codefart_core::audio::play_sound(&config);
+    let _ = play_completion_alert(&config);
 
     // Forward the command's exit code
     let code = runner::status_to_code(status);

@@ -16,6 +16,9 @@ interface Theme {
 interface DesktopState {
     theme: string;
     custom_sound: string | null;
+    notification_enabled: boolean;
+    notification_title: string;
+    notification_body: string;
     hook_installed: boolean;
     autostart: boolean;
     themes: Theme[];
@@ -42,7 +45,7 @@ function App() {
     const [themes, setThemes] = useState<Theme[]>(FALLBACK_THEMES);
     const [theme, setTheme] = useState("classic");
     const [customSound, setCustomSound] = useState<string | null>(null);
-    const [notifyEnabled, setNotifyEnabled] = useState(true);
+    const [notifyEnabled, setNotifyEnabled] = useState(false);
     const [notifyTitle, setNotifyTitle] = useState("Claude");
     const [notifyBody, setNotifyBody] = useState("已完成");
     const [autostart, setAutostart] = useState(false);
@@ -52,6 +55,9 @@ function App() {
     const applyState = (state: DesktopState) => {
         setTheme(state.theme);
         setCustomSound(state.custom_sound);
+        setNotifyEnabled(state.notification_enabled);
+        setNotifyTitle(state.notification_title);
+        setNotifyBody(state.notification_body);
         setHookInstalled(state.hook_installed);
         setAutostart(state.autostart);
         setThemes(state.themes);
@@ -117,6 +123,37 @@ function App() {
         void runAction(async () => {
             applyState(await invoke<DesktopState>("install_hook"));
         });
+    };
+
+    const saveNotificationPreferences = (
+        enabled: boolean,
+        title: string,
+        body: string,
+    ) => {
+        void runAction(async () => {
+            applyState(
+                await invoke<DesktopState>("set_notification_preferences", {
+                    enabled,
+                    title,
+                    body,
+                }),
+            );
+        });
+    };
+
+    const handleNotificationToggle = (enabled: boolean) => {
+        setNotifyEnabled(enabled);
+        saveNotificationPreferences(enabled, notifyTitle, notifyBody);
+    };
+
+    const handleNotificationTitle = (title: string) => {
+        setNotifyTitle(title);
+        saveNotificationPreferences(notifyEnabled, title, notifyBody);
+    };
+
+    const handleNotificationBody = (body: string) => {
+        setNotifyBody(body);
+        saveNotificationPreferences(notifyEnabled, notifyTitle, body);
     };
 
     const handleAutostart = (enabled: boolean) => {
@@ -193,9 +230,9 @@ function App() {
                             enabled={notifyEnabled}
                             title={notifyTitle}
                             body={notifyBody}
-                            onToggle={setNotifyEnabled}
-                            onTitleChange={setNotifyTitle}
-                            onBodyChange={setNotifyBody}
+                            onToggle={handleNotificationToggle}
+                            onTitleChange={handleNotificationTitle}
+                            onBodyChange={handleNotificationBody}
                         />
                     </div>
                 )}

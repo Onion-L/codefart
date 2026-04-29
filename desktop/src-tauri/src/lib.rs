@@ -15,6 +15,9 @@ struct ThemeInfo {
 struct DesktopState {
     theme: String,
     custom_sound: Option<String>,
+    notification_enabled: bool,
+    notification_title: String,
+    notification_body: String,
     hook_installed: bool,
     autostart: bool,
     themes: Vec<ThemeInfo>,
@@ -35,7 +38,10 @@ fn desktop_state(app: &AppHandle) -> Result<DesktopState, String> {
 
     Ok(DesktopState {
         theme: config.active_theme().to_string(),
-        custom_sound: config.custom_sound,
+        custom_sound: config.custom_sound.clone(),
+        notification_enabled: config.notification_enabled(),
+        notification_title: config.notification_title().to_string(),
+        notification_body: config.notification_body().to_string(),
         hook_installed,
         autostart,
         themes,
@@ -85,6 +91,19 @@ fn install_hook(app: AppHandle) -> Result<DesktopState, String> {
 }
 
 #[tauri::command]
+fn set_notification_preferences(
+    app: AppHandle,
+    enabled: bool,
+    title: String,
+    body: String,
+) -> Result<DesktopState, String> {
+    let mut config = Config::load().map_err(command_err)?;
+    config.set_notification_preferences(enabled, &title, &body);
+    config.save().map_err(command_err)?;
+    desktop_state(&app)
+}
+
+#[tauri::command]
 fn set_autostart(app: AppHandle, enabled: bool) -> Result<DesktopState, String> {
     let autolaunch = app.autolaunch();
     if enabled {
@@ -116,6 +135,7 @@ pub fn run() {
             set_custom_sound,
             clear_custom_sound,
             install_hook,
+            set_notification_preferences,
             set_autostart,
         ])
         .setup(|app| {
