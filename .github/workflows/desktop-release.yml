@@ -16,7 +16,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,15 +26,13 @@ jobs:
       - name: Install frontend deps
         run: cd desktop && npm ci
 
-      - name: Build desktop app
-        run: cd desktop && npx tauri build --ci
+      - name: Build desktop app (universal)
+        run: cd desktop && npx tauri build --ci --target universal-apple-darwin
 
-      - name: Rename DMG to stable name
+      - name: Rename DMG and upload to release
         run: |
-          cd desktop/target/release/bundle/dmg
-          mv *.dmg CodeFart-macOS.dmg
-
-      - name: Upload DMG to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: desktop/target/release/bundle/dmg/CodeFart-macOS.dmg
+          DMG=$(find desktop/target -path '*/bundle/dmg/*.dmg' | head -1)
+          cp "$DMG" CodeFart-macOS.dmg
+          gh release upload ${{ github.ref_name }} CodeFart-macOS.dmg --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
