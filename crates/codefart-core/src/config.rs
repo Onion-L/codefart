@@ -12,8 +12,8 @@ pub const BUILTIN_THEMES: &[(&str, &str)] = &[
     ("thunder", "For those long CI runs"),
 ];
 
-pub const DEFAULT_NOTIFICATION_TITLE: &str = "Claude";
-pub const DEFAULT_NOTIFICATION_BODY: &str = "已完成";
+pub const DEFAULT_NOTIFICATION_TITLE: &str = "💨 It's done";
+pub const DEFAULT_NOTIFICATION_BODY: &str = "Your AI ripped one. Come back.";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
@@ -173,12 +173,12 @@ mod tests {
     }
 
     #[test]
-    fn notification_defaults_are_safe_for_existing_cli_users() {
+    fn notification_defaults_match_constants() {
         let config = Config::default();
 
         assert!(!config.notification_enabled());
-        assert_eq!(config.notification_title(), "Claude");
-        assert_eq!(config.notification_body(), "已完成");
+        assert_eq!(config.notification_title(), "💨 It's done");
+        assert_eq!(config.notification_body(), "Your AI ripped one. Come back.");
     }
 
     #[test]
