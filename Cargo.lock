@@ -633,7 +633,7 @@ checksum = "4bfbf56724aa9eca8afa4fcfadeb479e722935bb2a0900c2d37e0cc477af0688"
 
 [[package]]
 name = "codefart"
-version = "0.2.15"
+version = "0.2.19"
 dependencies = [
  "clap",
  "codefart-core",
@@ -642,7 +642,7 @@ dependencies = [
 
 [[package]]
 name = "codefart-core"
-version = "0.2.15"
+version = "0.2.19"
 dependencies = [
  "dirs 6.0.0",
  "rodio",
@@ -658,7 +658,7 @@ dependencies = [
 
 [[package]]
 name = "codefart-desktop"
-version = "0.2.15"
+version = "0.2.19"
 dependencies = [
  "codefart-core",
  "serde",

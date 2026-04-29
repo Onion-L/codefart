@@ -27,13 +27,8 @@ jobs:
       - name: Build desktop app (universal)
         run: cd desktop && npx tauri build --ci --target universal-apple-darwin
 
-      - name: Find and upload DMG
-        run: |
-          DMG=$(find desktop/target -path '*/bundle/dmg/*.dmg' | head -1)
-          echo "DMG=$DMG" >> $GITHUB_ENV
-
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
           name: codefart-desktop-macos
-          path: ${{ env.DMG }}
+          path: desktop/target/**/bundle/dmg/*.dmg
