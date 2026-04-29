@@ -1,0 +1,273 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --cream: #fffbeb;
+    --paper: #fffdf4;
+    --text: #1a1410;
+    --muted: rgba(26, 20, 16, 0.62);
+    --orange: #f05a28;
+    --shadow: rgba(89, 46, 21, 0.14);
+    --sticky: #fef9c3;
+    --border: rgba(26, 20, 16, 0.12);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--cream);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    cursor: default;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+    height: 100vh;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.12;
+    background-image: radial-gradient(
+        rgba(26, 20, 16, 0.16) 0.7px,
+        transparent 0.8px
+    );
+    background-size: 12px 12px;
+}
+
+#root {
+    position: relative;
+    z-index: 1;
+    padding: 32px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    height: 100vh;
+}
+
+[data-tauri-drag-region] {
+    -webkit-app-region: drag;
+}
+
+::selection {
+    background: #fef08a;
+    color: var(--text);
+}
+
+/* ── Drag region ── */
+[data-tauri-drag-region] {
+    -webkit-app-region: drag;
+}
+
+/* ── Section Card ── */
+.section {
+    background: var(--paper);
+    border: 2px solid var(--text);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    padding: 16px;
+    box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.section-title {
+    font-family: "Fredoka", sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+/* ── Row ── */
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+
+.row-label {
+    font-size: 14px;
+}
+
+/* ── Toggle Switch ── */
+.toggle {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    border: 2px solid var(--text);
+    background: #e0d8cb;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s;
+    box-shadow: 2px 2px 0 var(--shadow);
+    flex-shrink: 0;
+}
+.toggle.active {
+    background: var(--orange);
+}
+.toggle-knob {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--text);
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    transition: transform 0.15s;
+}
+.toggle.active .toggle-knob {
+    transform: translateX(20px);
+}
+
+/* ── Input ── */
+.input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--sticky);
+    border: 2px solid rgba(89, 46, 21, 0.18);
+    border-radius: 12px 4px 12px 4px;
+    font-family: -apple-system, sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    box-shadow: 2px 3px 0 var(--shadow);
+    transform: rotate(-0.3deg);
+    outline: none;
+}
+.input:focus {
+    border-color: var(--orange);
+    transform: rotate(0deg);
+}
+
+.input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+}
+.input-row label {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* ── Theme Row ── */
+.theme-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.theme-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 2px solid var(--border);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    background: var(--paper);
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+}
+.theme-row:hover {
+    transform: translateY(-2px) rotate(0.5deg);
+    box-shadow: 3px 3px 0 var(--shadow);
+}
+.theme-row.selected {
+    border-color: var(--orange);
+    background: #fff5f0;
+}
+
+.theme-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+}
+.theme-row.selected .theme-dot {
+    background: var(--orange);
+}
+
+.theme-name {
+    flex: 1;
+    font-size: 14px;
+}
+.theme-desc {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.preview-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    opacity: 0.6;
+    transition: opacity 0.12s;
+}
+.preview-btn:hover {
+    opacity: 1;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+    background: var(--orange);
+    color: #fff;
+    border: 2px solid var(--text);
+    padding: 6px 16px;
+    border-radius: 99px;
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--shadow);
+    transform: rotate(0.5deg);
+    transition: transform 0.12s, box-shadow 0.12s;
+}
+.btn-primary:hover {
+    transform: rotate(-0.5deg) scale(1.04);
+}
+.btn-primary:active {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.btn-ghost:hover {
+    color: var(--orange);
+}
+
+.upload-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.custom-sound-name {
+    font-size: 12px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+}

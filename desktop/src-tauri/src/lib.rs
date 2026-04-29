@@ -12,6 +12,11 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            // Make title bar transparent overlay (traffic lights on content)
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_title_bar_style(tauri::TitleBarStyle::Overlay);
+                let _ = window.set_title("");
+            }
             let show = MenuItemBuilder::with_id("show", "Preferences").build(app)?;
             let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
             let menu = MenuBuilder::new(app).item(&show).item(&quit).build()?;
