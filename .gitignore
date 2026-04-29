@@ -21,3 +21,7 @@ Thumbs.db
 # Added by cargo
 
 /target
+
+# Desktop (Tauri)
+desktop/node_modules/
+desktop/dist/
