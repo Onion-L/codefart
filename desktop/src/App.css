@@ -91,14 +91,14 @@ body::before {
 /* ── Tab bar ── */
 .tab-bar {
     display: flex;
+    justify-content: center;
     padding: 4px 12px;
     gap: 4px;
     flex-shrink: 0;
 }
 
 .tab {
-    flex: 1;
-    max-width: 140px;
+    min-width: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
