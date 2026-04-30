@@ -21,17 +21,17 @@ Commit and push the version bump before building release artifacts.
 
 Local desktop signing needs a Developer ID Application certificate installed in Keychain.
 
-Current signing identity:
+Example signing identity:
 
 ```text
-Developer ID Application: Xiang Li (AQMMZQ3MDX)
+Developer ID Application: Your Name (TEAMID1234)
 ```
 
 Local notarization also needs the App Store Connect API key file:
 
 ```bash
-export APPLE_API_KEY_ID="T6ACT69T9A"
-export APPLE_API_ISSUER="728c5653-1d7c-445e-9ffb-698b6f71b6f3"
+export APPLE_API_KEY_ID="YOUR_KEY_ID"
+export APPLE_API_ISSUER="YOUR_ISSUER_ID"
 export APPLE_API_KEY_PATH="$HOME/AuthKey_${APPLE_API_KEY_ID}.p8"
 ```
 
@@ -52,7 +52,7 @@ Build Apple Silicon:
 
 ```bash
 export VERSION="0.2.20"
-export SIGNING_IDENTITY="Developer ID Application: Xiang Li (AQMMZQ3MDX)"
+export SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID1234)"
 
 cd desktop
 npx tauri build --ci --target aarch64-apple-darwin \
@@ -66,7 +66,7 @@ Build Intel:
 
 ```bash
 export VERSION="0.2.20"
-export SIGNING_IDENTITY="Developer ID Application: Xiang Li (AQMMZQ3MDX)"
+export SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID1234)"
 
 cd desktop
 npx tauri build --ci --target x86_64-apple-darwin \
