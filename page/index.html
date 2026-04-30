@@ -329,6 +329,71 @@
                 transform: none;
                 box-shadow: 5px 5px 0 rgba(89, 46, 21, 0.1);
             }
+            .download-section .balloon {
+                min-width: 240px;
+                max-width: 320px;
+                flex: 1 1 240px;
+            }
+            .download-btns {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 12px;
+            }
+            .download-btn {
+                display: block;
+                background: var(--orange);
+                color: #fff;
+                border: 2px solid var(--text);
+                border-radius: 12px;
+                padding: 6px 14px;
+                font-size: 15px;
+                font-weight: 700;
+                text-decoration: none;
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+                font-family: "Fredoka", sans-serif;
+                position: relative;
+            }
+            .download-btn:hover {
+                transform: scale(1.04);
+                box-shadow: 3px 3px 0 rgba(26, 20, 16, 0.18);
+            }
+            .download-btn.recommended::after {
+                content: "✓ for you";
+                position: absolute;
+                top: -10px;
+                right: -6px;
+                background: var(--green);
+                color: #fff;
+                font-size: 11px;
+                padding: 3px 10px;
+                border-radius: 99px;
+                border: 2px solid var(--text);
+                white-space: nowrap;
+            }
+            .fart-pop {
+                position: absolute;
+                left: 50%;
+                top: 45%;
+                pointer-events: none;
+                font-size: 26px;
+                animation: fartSlide 0.7s ease-in-out forwards;
+                z-index: 10;
+            }
+            @keyframes fartSlide {
+                0% {
+                    transform: translate(-160%, -50%) scale(0.4);
+                    opacity: 0;
+                }
+                45% {
+                    transform: translate(40%, -90%) scale(1.25);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(90%, -130%) scale(1);
+                    opacity: 0;
+                }
+            }
             .balloon .icon {
                 font-size: 40px;
                 display: block;
@@ -705,19 +770,18 @@
                 </div>
             </section>
 
-            <!-- DESKTOP APP (hidden until DMG is ready)
-            <section class="panel">
-                <h2 class="section-title">Prefer a real app?</h2>
+            <!-- DESKTOP APP -->
+            <section class="panel download-section">
+                <h2 class="section-title">Download Desktop App</h2>
                 <div class="balloons">
-                    <a
-                        class="balloon"
-                        href="https://github.com/Onion-L/codefart/releases/latest"
-                        style="text-decoration: none; color: inherit;"
-                    >
+                    <div class="balloon">
                         <span class="icon">🍎</span>
-                        <h3>macOS</h3>
-                        <p>Download DMG →</p>
-                    </a>
+                        <h3>Apple</h3>
+                        <div class="download-btns">
+                            <a class="download-btn" data-arch="silicon" href="https://github.com/Onion-L/codefart/releases/download/v0.2.20/CodeFart_0.2.20_aarch64.dmg">Apple Silicon</a>
+                            <a class="download-btn" data-arch="intel" href="https://github.com/Onion-L/codefart/releases/download/v0.2.20/CodeFart_0.2.20_x64.dmg">Intel</a>
+                        </div>
+                    </div>
                     <div class="balloon balloon-soon">
                         <span class="icon">🪟</span>
                         <h3>Windows</h3>
@@ -733,7 +797,6 @@
                     Tray icon · theme picker · notifications · auto-start
                 </p>
             </section>
-            -->
 
             <!-- CTA -->
             <section class="panel cta-panel">
@@ -785,6 +848,39 @@
                         }, 2000);
                     });
             }
+
+            async function recommendMacArch() {
+                const isMac = navigator.platform.includes('Mac') || navigator.userAgent.includes('Mac');
+                if (!isMac) return;
+
+                let arch = 'silicon';
+                try {
+                    const hints = await navigator.userAgentData?.getHighEntropyValues(['architecture']);
+                    if (hints?.architecture) {
+                        const a = hints.architecture.toLowerCase();
+                        if (a.includes('x86') || a.includes('amd')) {
+                            arch = 'intel';
+                        }
+                    }
+                } catch (e) {}
+
+                const btn = document.querySelector(`.download-btn[data-arch="${arch}"]`);
+                if (btn) btn.classList.add('recommended');
+            }
+            recommendMacArch();
+
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setTimeout(() => {
+                        const pop = document.createElement('span');
+                        pop.textContent = '💨';
+                        pop.className = 'fart-pop';
+                        pop.setAttribute('aria-hidden', 'true');
+                        btn.appendChild(pop);
+                        setTimeout(() => pop.remove(), 700);
+                    }, 120);
+                });
+            });
         </script>
     </body>
 </html>
