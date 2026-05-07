@@ -2,8 +2,11 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_notification::NotificationExt;
 
 use codefart_core::config::{BUILTIN_THEMES, Config};
+
+const NOTIFY_COMPLETION_ARG: &str = "--codefart-notify-completion";
 
 #[derive(serde::Serialize)]
 struct ThemeInfo {
@@ -25,6 +28,27 @@ struct DesktopState {
 
 fn command_err(error: impl std::fmt::Display) -> String {
     error.to_string()
+}
+
+fn has_notify_completion_arg(args: &[String]) -> bool {
+    args.iter().any(|arg| arg == NOTIFY_COMPLETION_ARG)
+}
+
+fn show_completion_notification(app: &AppHandle) {
+    let Ok(config) = Config::load() else {
+        return;
+    };
+
+    if !config.notification_enabled() {
+        return;
+    }
+
+    let _ = app
+        .notification()
+        .builder()
+        .title(config.notification_title())
+        .body(config.notification_body())
+        .show();
 }
 
 fn desktop_state(app: &AppHandle) -> Result<DesktopState, String> {
@@ -123,7 +147,12 @@ fn set_autostart(app: AppHandle, enabled: bool) -> Result<DesktopState, String> 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if has_notify_completion_arg(&args) {
+                show_completion_notification(app);
+                return;
+            }
+
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
                 let _ = window.set_focus();
@@ -146,11 +175,22 @@ pub fn run() {
             set_autostart,
         ])
         .setup(|app| {
+            let launched_for_notification =
+                std::env::args().any(|arg| arg == NOTIFY_COMPLETION_ARG);
+
             // Make title bar transparent overlay (traffic lights on content)
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_title_bar_style(tauri::TitleBarStyle::Overlay);
                 let _ = window.set_title("");
+                if launched_for_notification {
+                    let _ = window.hide();
+                }
             }
+
+            if launched_for_notification {
+                show_completion_notification(app.handle());
+            }
+
             let show = MenuItemBuilder::with_id("show", "Preferences").build(app)?;
             let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
             let menu = MenuBuilder::new(app).item(&show).item(&quit).build()?;

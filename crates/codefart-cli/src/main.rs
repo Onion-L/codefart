@@ -48,7 +48,6 @@ fn cmd_play() -> Result<(), CodefartError> {
 
 fn play_completion_alert(config: &Config) -> Result<(), CodefartError> {
     codefart_core::audio::play_sound(config)?;
-    let _ = codefart_core::notification::notify_completion(config);
     Ok(())
 }
 

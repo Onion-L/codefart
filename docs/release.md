@@ -9,7 +9,7 @@ Keep these versions in sync before publishing:
 - `Cargo.toml` -> `[workspace.package].version`
 - `desktop/src-tauri/tauri.conf.json` -> `version`
 
-Example for `0.2.20`:
+Example for `0.2.21`:
 
 ```bash
 rg 'version = "|\"version\":' Cargo.toml desktop/src-tauri/tauri.conf.json
@@ -51,7 +51,7 @@ cd ..
 Build Apple Silicon:
 
 ```bash
-export VERSION="0.2.20"
+export VERSION="0.2.21"
 export SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID1234)"
 
 cd desktop
@@ -65,7 +65,7 @@ export DMG="target/aarch64-apple-darwin/release/bundle/dmg/CodeFart_${VERSION}_a
 Build Intel:
 
 ```bash
-export VERSION="0.2.20"
+export VERSION="0.2.21"
 export SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID1234)"
 
 cd desktop
@@ -124,7 +124,7 @@ The GitHub Release must exist first. The CLI release workflow creates it when pu
 Create and push a tag:
 
 ```bash
-export VERSION="0.2.20"
+export VERSION="0.2.21"
 export TAG="v${VERSION}"
 
 git tag "$TAG"
@@ -134,7 +134,7 @@ git push origin "$TAG"
 If the tag/release already exists, upload the local DMG directly:
 
 ```bash
-export TAG="v0.2.20"
+export TAG="v0.2.21"
 gh release upload "$TAG" "$DMG" --clobber
 ```
 
@@ -169,7 +169,7 @@ The manual desktop workflow is `.github/workflows/desktop-release.yml`.
 Run it from CLI:
 
 ```bash
-gh workflow run desktop-release.yml -f tag="v0.2.20"
+gh workflow run desktop-release.yml -f tag="v0.2.21"
 ```
 
 Required GitHub Secrets:

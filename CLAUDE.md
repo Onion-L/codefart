@@ -12,7 +12,7 @@ CodeFart is a Rust Cargo workspace with three main shipped surfaces:
 
 There is also a static landing page in `page/`, supporting docs in `docs/`, release workflows in `.github/workflows/`, and install/uninstall scripts at the repository root.
 
-The workspace version is currently `0.2.20`. Keep `Cargo.toml`, `desktop/src-tauri/tauri.conf.json`, and `desktop/package.json` in sync when bumping versions.
+The workspace version is currently `0.2.21`. Keep `Cargo.toml`, `desktop/src-tauri/tauri.conf.json`, and `desktop/package.json` in sync when bumping versions.
 
 ## Commands
 
