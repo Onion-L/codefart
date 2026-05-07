@@ -1,33 +1,77 @@
 # Release
 
-This note documents the local desktop release flow and upload steps for GitHub Releases.
+CodeFart 发版完整流程：CLI 由 GitHub Actions 自动构建，Desktop DMG 本地打包 + 公证后上传。
 
-## Version
+## 发布检查清单
 
-Keep these versions in sync before publishing:
+- [ ] 1. 版本号同步（3 个文件）
+- [ ] 2. Commit + Push
+- [ ] 3. 打 Tag + Push（触发 CLI Release Workflow）
+- [ ] 4. 等待 CLI Workflow 完成
+- [ ] 5. 本地打包 Desktop DMG（Apple Silicon + Intel）
+- [ ] 6. 公证 + Staple + 验证
+- [ ] 7. 上传 DMG 到 GitHub Release
+- [ ] 8. 更新 landing page 下载链接 + Push
 
-- `Cargo.toml` -> `[workspace.package].version`
-- `desktop/src-tauri/tauri.conf.json` -> `version`
+---
 
-Example for `0.2.21`:
+## 1. 版本号同步
+
+以下 3 个文件的版本号必须一致：
+
+| 文件 | 字段 |
+|------|------|
+| `Cargo.toml` | `[workspace.package].version` |
+| `desktop/src-tauri/tauri.conf.json` | `version` |
+| `desktop/package.json` | `version` |
+
+一键检查：
 
 ```bash
-rg 'version = "|\"version\":' Cargo.toml desktop/src-tauri/tauri.conf.json
+rg 'version.*=.*"0\.' Cargo.toml
+rg '"version"' desktop/src-tauri/tauri.conf.json desktop/package.json
 ```
 
-Commit and push the version bump before building release artifacts.
+## 2. Commit + Push
 
-## Apple Credentials
+```bash
+git add Cargo.toml desktop/src-tauri/tauri.conf.json desktop/package.json
+git commit -m "chore: bump version to X.Y.Z"
+git push
+```
 
-Local desktop signing needs a Developer ID Application certificate installed in Keychain.
+## 3. 打 Tag（触发 CLI Release）
 
-Example signing identity:
+推送 `v*` tag 会触发 `.github/workflows/release.yml`，自动构建并发布 Linux/macOS/Windows CLI 产物。
+
+```bash
+VERSION="X.Y.Z"
+TAG="v${VERSION}"
+git tag "$TAG"
+git push origin "$TAG"
+```
+
+## 4. 等待 CLI Workflow
+
+在 Actions 页面确认 `Release` workflow 跑完，新 release 包含 CLI 的 5 个产物：
+
+- `codefart-aarch64-apple-darwin.tar.gz`
+- `codefart-x86_64-apple-darwin.tar.gz`
+- `codefart-x86_64-unknown-linux-gnu.tar.gz`
+- `codefart-aarch64-unknown-linux-gnu.tar.gz`
+- `codefart-x86_64-pc-windows-msvc.zip`
+
+## 5. 本地打包 Desktop DMG
+
+### Apple Credentials
+
+本地签名需要 Developer ID Application 证书存储在 Keychain 中：
 
 ```text
 Developer ID Application: Your Name (TEAMID1234)
 ```
 
-Local notarization also needs the App Store Connect API key file:
+公证需要 App Store Connect API Key：
 
 ```bash
 export APPLE_API_KEY_ID="YOUR_KEY_ID"
@@ -35,52 +79,39 @@ export APPLE_API_ISSUER="YOUR_ISSUER_ID"
 export APPLE_API_KEY_PATH="$HOME/AuthKey_${APPLE_API_KEY_ID}.p8"
 ```
 
-Do not commit `.p8`, `.p12`, or base64-encoded certificate values.
+**不要 commit `.p8`、`.p12` 或 base64 编码的证书。**
 
-## Local Desktop Build
-
-Install prerequisites once:
+### 一次性环境准备
 
 ```bash
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
-cd desktop
-npm ci
-cd ..
+cd desktop && npm ci && cd ..
 ```
 
-Build Apple Silicon:
+### 构建
 
 ```bash
-export VERSION="0.2.21"
-export SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID1234)"
+VERSION="X.Y.Z"
+SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID1234)"
 
+# Apple Silicon
 cd desktop
 npx tauri build --ci --target aarch64-apple-darwin \
   --config "{\"bundle\":{\"macOS\":{\"signingIdentity\":\"$SIGNING_IDENTITY\"}}}"
 cd ..
+A_DMG="target/aarch64-apple-darwin/release/bundle/dmg/CodeFart_${VERSION}_aarch64.dmg"
 
-export DMG="target/aarch64-apple-darwin/release/bundle/dmg/CodeFart_${VERSION}_aarch64.dmg"
-```
-
-Build Intel:
-
-```bash
-export VERSION="0.2.21"
-export SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID1234)"
-
+# Intel
 cd desktop
 npx tauri build --ci --target x86_64-apple-darwin \
   --config "{\"bundle\":{\"macOS\":{\"signingIdentity\":\"$SIGNING_IDENTITY\"}}}"
 cd ..
-
-export DMG="target/x86_64-apple-darwin/release/bundle/dmg/CodeFart_${VERSION}_x64.dmg"
+X_DMG="target/x86_64-apple-darwin/release/bundle/dmg/CodeFart_${VERSION}_x64.dmg"
 ```
 
-Do not build `universal-apple-darwin` unless there is a specific reason. Separate Apple Silicon and Intel builds are faster and easier to debug.
+不要构建 `universal-apple-darwin`，分开构建更快、更容易排查问题。
 
-## Notarize And Staple
-
-Submit the DMG to Apple:
+## 6. 公证 + Staple
 
 ```bash
 xcrun notarytool submit "$DMG" \
@@ -91,7 +122,7 @@ xcrun notarytool submit "$DMG" \
   --timeout 30m
 ```
 
-Staple and validate the ticket:
+Staple + 验证：
 
 ```bash
 xcrun stapler staple -v "$DMG"
@@ -99,85 +130,65 @@ xcrun stapler validate -v "$DMG"
 spctl -a -vv -t install "$DMG"
 ```
 
-Expected `spctl -t install` result:
+预期输出：
 
 ```text
 accepted
 source=Notarized Developer ID
 ```
 
-Optional mounted app check:
+## 7. 上传到 GitHub Release
 
 ```bash
-hdiutil attach -nobrowse -readonly "$DMG"
-codesign --verify --deep --strict --verbose=2 "/Volumes/CodeFart/CodeFart.app"
-spctl -a -vv "/Volumes/CodeFart/CodeFart.app"
-hdiutil detach "/Volumes/CodeFart"
+TAG="v${VERSION}"
+gh release upload "$TAG" "$A_DMG" "$X_DMG" --clobber
 ```
 
-If the mounted volume is named `CodeFart 1`, use `/Volumes/CodeFart 1/CodeFart.app` and detach `/Volumes/CodeFart 1`.
-
-## Upload To GitHub Release
-
-The GitHub Release must exist first. The CLI release workflow creates it when pushing a `v*` tag.
-
-Create and push a tag:
-
-```bash
-export VERSION="0.2.21"
-export TAG="v${VERSION}"
-
-git tag "$TAG"
-git push origin "$TAG"
-```
-
-If the tag/release already exists, upload the local DMG directly:
-
-```bash
-export TAG="v0.2.21"
-gh release upload "$TAG" "$DMG" --clobber
-```
-
-Recommended release asset names:
-
-```bash
-export APPLE_SILICON_DMG="target/aarch64-apple-darwin/release/bundle/dmg/CodeFart_${VERSION}_aarch64.dmg"
-cp "$APPLE_SILICON_DMG" "CodeFart_${VERSION}-apple-silicon.dmg"
-gh release upload "$TAG" "CodeFart_${VERSION}-apple-silicon.dmg" --clobber
-
-export INTEL_DMG="target/x86_64-apple-darwin/release/bundle/dmg/CodeFart_${VERSION}_x64.dmg"
-cp "$INTEL_DMG" "CodeFart_${VERSION}-intel.dmg"
-gh release upload "$TAG" "CodeFart_${VERSION}-intel.dmg" --clobber
-```
-
-Check assets:
+确认产物：
 
 ```bash
 gh release view "$TAG" --json assets --jq '.assets[].name'
 ```
 
-Delete stale DMGs from the same release if needed:
+## 8. 更新 Landing Page
 
-```bash
-gh release delete-asset "$TAG" "CodeFart_0.2.14_universal.dmg" -y
+更新 `page/index.html` 中的下载链接：
+
+```html
+<a class="download-btn" data-arch="silicon"
+   href="https://github.com/Onion-L/codefart/releases/download/vX.Y.Z/CodeFart_X.Y.Z_aarch64.dmg">Apple Silicon</a>
+<a class="download-btn" data-arch="intel"
+   href="https://github.com/Onion-L/codefart/releases/download/vX.Y.Z/CodeFart_X.Y.Z_x64.dmg">Intel</a>
 ```
 
-## GitHub Actions Desktop Build
-
-The manual desktop workflow is `.github/workflows/desktop-release.yml`.
-
-Run it from CLI:
-
 ```bash
-gh workflow run desktop-release.yml -f tag="v0.2.21"
+git add page/index.html
+git commit -m "chore: update download links to vX.Y.Z"
+git push
 ```
 
-Required GitHub Secrets:
+---
 
-- `APPLE_CERTIFICATE`: base64-encoded `.p12`
-- `APPLE_CERTIFICATE_PASSWORD`: `.p12` password
-- `APPLE_API_ISSUER`: App Store Connect issuer ID
-- `APPLE_API_KEY`: App Store Connect key ID
-- `APPLE_API_KEY_P8_BASE64`: base64-encoded `.p8`
+## GitHub Actions Desktop Build（备选）
 
-If GitHub Actions notarization stalls or times out, use the local build, notarize, staple, and `gh release upload` flow above.
+如果本地打包不便，也可以用 `.github/workflows/desktop-release.yml` 走 Actions 构建：
+
+```bash
+gh workflow run desktop-release.yml -f tag="vX.Y.Z"
+```
+
+需要以下 GitHub Secrets：
+
+- `APPLE_CERTIFICATE`: base64 编码的 `.p12`
+- `APPLE_CERTIFICATE_PASSWORD`: `.p12` 密码
+- `APPLE_API_ISSUER`: App Store Connect Issuer ID
+- `APPLE_API_KEY`: App Store Connect Key ID
+- `APPLE_API_KEY_P8_BASE64`: base64 编码的 `.p8`
+
+如果 Actions 公证超时或卡住，回到上面的本地构建流程。
+
+## 删除旧 Assets
+
+```bash
+gh release delete-asset "$TAG" "CodeFart_X.Y.Z_universal.dmg" -y
+```
