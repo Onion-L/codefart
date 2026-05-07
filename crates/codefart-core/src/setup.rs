@@ -27,7 +27,24 @@ fn codefart_hook_entry() -> serde_json::Value {
 }
 
 fn is_codefart_hook_command(command: &str) -> bool {
-    command == HOOK_COMMAND || command == LEGACY_HOOK_COMMAND
+    command == HOOK_COMMAND || invokes_codefart_play(command)
+}
+
+fn invokes_codefart_play(command: &str) -> bool {
+    let first_command = command.split(';').next().unwrap_or(command).trim();
+    if first_command == LEGACY_HOOK_COMMAND {
+        return true;
+    }
+
+    let mut parts = first_command.split_whitespace();
+    let Some(binary) = parts.next() else {
+        return false;
+    };
+    let Some(subcommand) = parts.next() else {
+        return false;
+    };
+
+    subcommand == "play" && (binary == "codefart" || binary.ends_with("/codefart"))
 }
 
 /// Check whether CodeFart's hook is installed in Claude settings.
@@ -39,7 +56,7 @@ pub fn check_hook_installed() -> Result<bool, CodefartError> {
     let content = std::fs::read_to_string(&path).map_err(CodefartError::ClaudeSettingsRead)?;
     let settings: serde_json::Value =
         serde_json::from_str(&content).map_err(CodefartError::ClaudeSettingsParse)?;
-    Ok(has_codefart_hook(&settings))
+    Ok(has_current_codefart_hook(&settings))
 }
 
 /// Check whether CodeFart's hook is already present in the settings.
@@ -262,6 +279,26 @@ mod tests {
         });
 
         assert!(has_codefart_hook(&settings));
+        assert!(remove_codefart_hooks(&mut settings));
+        assert!(!has_codefart_hook(&settings));
+    }
+
+    #[test]
+    fn removes_absolute_legacy_hook_command() {
+        let mut settings = serde_json::json!({
+            "hooks": {
+                "Stop": [{
+                    "matcher": "",
+                    "hooks": [{
+                        "type": "command",
+                        "command": "/Users/onion/workbench/codefart-app/target/debug/codefart play"
+                    }]
+                }]
+            }
+        });
+
+        assert!(has_codefart_hook(&settings));
+        assert!(!has_current_codefart_hook(&settings));
         assert!(remove_codefart_hooks(&mut settings));
         assert!(!has_codefart_hook(&settings));
     }

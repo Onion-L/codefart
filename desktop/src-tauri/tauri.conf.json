@@ -1,6 +1,6 @@
 {
   "productName": "CodeFart",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "identifier": "com.onion.codefart",
   "build": {
     "frontendDist": "../dist",
