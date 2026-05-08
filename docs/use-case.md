@@ -5,7 +5,7 @@
 ### 安装（一辈子一次）
 
 ```bash
-$ brew install codefart
+$ curl -fsSL https://raw.githubusercontent.com/Onion-L/codefart/main/install.sh | bash
 $ codefart setup
 ✓ Added Stop hook to ~/.claude/settings.json
 ✓ Done. Next Claude session will notify you with a sound.

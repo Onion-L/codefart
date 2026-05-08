@@ -8,6 +8,28 @@ use crate::error::CodefartError;
 
 const REPO: &str = "Onion-L/codefart";
 
+#[derive(Debug, Clone, serde::Serialize, PartialEq, Eq)]
+pub struct DesktopUpdateInfo {
+    pub current_version: String,
+    pub latest_version: String,
+    pub update_available: bool,
+    pub release_url: String,
+    pub download_url: Option<String>,
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+struct LatestRelease {
+    tag_name: String,
+    html_url: String,
+    assets: Vec<ReleaseAsset>,
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+struct ReleaseAsset {
+    name: String,
+    browser_download_url: String,
+}
+
 /// Self-update codefart by downloading the latest release binary.
 pub fn update() -> Result<String, CodefartError> {
     let current_exe = env::current_exe()
@@ -89,6 +111,12 @@ pub fn update() -> Result<String, CodefartError> {
     }
 
     Ok(current_exe.display().to_string())
+}
+
+/// Check whether a newer desktop release is available.
+pub fn check_desktop_update(current_version: &str) -> Result<DesktopUpdateInfo, CodefartError> {
+    let release = fetch_latest_release()?;
+    Ok(desktop_update_info(current_version, release))
 }
 
 fn detect_target() -> &'static str {
@@ -178,6 +206,23 @@ fn extract_archive(archive: &std::path::Path, dest: &std::path::Path) -> Result<
 }
 
 fn get_latest_release_url(target: &str) -> Result<String, CodefartError> {
+    let release = fetch_latest_release()?;
+
+    let filename = if target.contains("windows") {
+        format!("codefart-{}.zip", target)
+    } else {
+        format!("codefart-{}.tar.gz", target)
+    };
+
+    release
+        .assets
+        .iter()
+        .find(|asset| asset.name == filename)
+        .map(|asset| asset.browser_download_url.clone())
+        .ok_or_else(|| CodefartError::Other(format!("no release asset found for {}", target)))
+}
+
+fn fetch_latest_release() -> Result<LatestRelease, CodefartError> {
     let api_url = format!("https://api.github.com/repos/{}/releases/latest", REPO);
 
     let response = ureq::get(&api_url)
@@ -190,32 +235,70 @@ fn get_latest_release_url(target: &str) -> Result<String, CodefartError> {
         .into_body()
         .read_to_string()
         .map_err(|e| CodefartError::Other(format!("read failed: {}", e)))?;
-    let json: serde_json::Value = serde_json::from_str(&body)
-        .map_err(|e| CodefartError::Other(format!("invalid JSON: {}", e)))?;
 
-    let assets = json["assets"]
-        .as_array()
-        .ok_or_else(|| CodefartError::Other("no assets in release".into()))?;
+    serde_json::from_str(&body).map_err(|e| CodefartError::Other(format!("invalid JSON: {}", e)))
+}
 
-    let filename = if target.contains("windows") {
-        format!("codefart-{}.zip", target)
-    } else {
-        format!("codefart-{}.tar.gz", target)
-    };
+fn desktop_update_info(current_version: &str, release: LatestRelease) -> DesktopUpdateInfo {
+    let latest_version = normalize_version(&release.tag_name);
+    let asset_name = desktop_dmg_asset_name(&latest_version);
+    let download_url = release
+        .assets
+        .iter()
+        .find(|asset| asset.name == asset_name)
+        .map(|asset| asset.browser_download_url.clone());
 
-    for asset in assets {
-        if asset["name"].as_str() == Some(&filename) {
-            return asset["browser_download_url"]
-                .as_str()
-                .map(|s: &str| s.to_string())
-                .ok_or_else(|| CodefartError::Other("no download URL".into()));
-        }
+    DesktopUpdateInfo {
+        current_version: normalize_version(current_version),
+        latest_version: latest_version.clone(),
+        update_available: is_newer_version(&latest_version, current_version),
+        release_url: release.html_url,
+        download_url,
     }
+}
 
-    Err(CodefartError::Other(format!(
-        "no release asset found for {}",
-        target
-    )))
+fn normalize_version(version: &str) -> String {
+    version.trim().trim_start_matches('v').to_string()
+}
+
+fn is_newer_version(latest: &str, current: &str) -> bool {
+    parse_version(latest) > parse_version(current)
+}
+
+fn parse_version(version: &str) -> Vec<u64> {
+    normalize_version(version)
+        .split('.')
+        .map(|part| {
+            part.chars()
+                .take_while(|c| c.is_ascii_digit())
+                .collect::<String>()
+                .parse::<u64>()
+                .unwrap_or(0)
+        })
+        .collect()
+}
+
+fn desktop_dmg_asset_name(version: &str) -> String {
+    format!(
+        "CodeFart_{}_{}.dmg",
+        normalize_version(version),
+        desktop_arch()
+    )
+}
+
+fn desktop_arch() -> &'static str {
+    #[cfg(target_arch = "aarch64")]
+    {
+        "aarch64"
+    }
+    #[cfg(target_arch = "x86_64")]
+    {
+        "x64"
+    }
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
+    {
+        "unsupported"
+    }
 }
 
 fn download_file(url: &str, dest: &PathBuf) -> Result<(), CodefartError> {
@@ -231,4 +314,56 @@ fn download_file(url: &str, dest: &PathBuf) -> Result<(), CodefartError> {
         .map_err(|e| CodefartError::Other(format!("download failed: {}", e)))?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn desktop_update_info_reports_available_update_and_matching_dmg() {
+        let release = LatestRelease {
+            tag_name: "v0.2.23".to_string(),
+            html_url: "https://github.com/Onion-L/codefart/releases/tag/v0.2.23".to_string(),
+            assets: vec![
+                ReleaseAsset {
+                    name: "codefart-aarch64-apple-darwin.tar.gz".to_string(),
+                    browser_download_url: "https://example.com/cli.tar.gz".to_string(),
+                },
+                ReleaseAsset {
+                    name: desktop_dmg_asset_name("0.2.23").to_string(),
+                    browser_download_url: "https://example.com/desktop.dmg".to_string(),
+                },
+            ],
+        };
+
+        let info = desktop_update_info("0.2.22", release);
+
+        assert!(info.update_available);
+        assert_eq!(info.current_version, "0.2.22");
+        assert_eq!(info.latest_version, "0.2.23");
+        assert_eq!(
+            info.release_url,
+            "https://github.com/Onion-L/codefart/releases/tag/v0.2.23"
+        );
+        assert_eq!(
+            info.download_url.as_deref(),
+            Some("https://example.com/desktop.dmg")
+        );
+    }
+
+    #[test]
+    fn desktop_update_info_handles_current_version() {
+        let release = LatestRelease {
+            tag_name: "v0.2.22".to_string(),
+            html_url: "https://github.com/Onion-L/codefart/releases/tag/v0.2.22".to_string(),
+            assets: vec![],
+        };
+
+        let info = desktop_update_info("0.2.22", release);
+
+        assert!(!info.update_available);
+        assert_eq!(info.latest_version, "0.2.22");
+        assert_eq!(info.download_url, None);
+    }
 }

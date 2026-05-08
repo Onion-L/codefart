@@ -245,18 +245,10 @@ tracing-subscriber = "0.3"
 
 - Release build (stripped): < 5 MB
 
-### Homebrew
+### Install Script
 
-```ruby
-class Codefart < Formula
-  desc "Play a sound when your AI finishes thinking"
-  homepage "https://github.com/xxx/codefart"
-  url "..."
-  def install
-    bin.install "codefart"
-  end
-end
-```
+- `install.sh` downloads the platform-specific release binary.
+- `uninstall.sh` removes the binary, config, and Claude hook.
 
 ---
 

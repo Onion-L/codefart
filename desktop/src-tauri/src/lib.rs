@@ -5,6 +5,7 @@ use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_notification::NotificationExt;
 
 use codefart_core::config::{BUILTIN_THEMES, Config};
+use codefart_core::update::DesktopUpdateInfo;
 
 const NOTIFY_COMPLETION_ARG: &str = "--codefart-notify-completion";
 
@@ -144,6 +145,12 @@ fn set_autostart(app: AppHandle, enabled: bool) -> Result<DesktopState, String> 
     desktop_state(&app)
 }
 
+#[tauri::command]
+fn check_desktop_update(app: AppHandle) -> Result<DesktopUpdateInfo, String> {
+    let current_version = app.package_info().version.to_string();
+    codefart_core::update::check_desktop_update(&current_version).map_err(command_err)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
@@ -165,6 +172,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             get_state,
+            check_desktop_update,
             set_theme,
             preview_theme,
             set_custom_sound,

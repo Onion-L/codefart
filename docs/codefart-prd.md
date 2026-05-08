@@ -82,7 +82,7 @@ A macOS menu bar app for users who prefer a visual interface. Allows point-and-c
 
 ### 7.2 Installation
 
-- Available via Homebrew — one command to install, one command to uninstall
+- Available via install script — one command to install, one command to uninstall
 - No additional dependencies required
 - Works immediately after installation with no setup steps
 
@@ -126,7 +126,7 @@ Naming the themes is itself a product decision — these names are shareable con
 
 ## 8. User Experience Principles
 
-**Zero friction first.** The time between `brew install` and hearing the first fart should be under 60 seconds, including the time it takes to run a command.
+**Zero friction first.** The time between running the install script and hearing the first fart should be under 60 seconds, including the time it takes to run a command.
 
 **One command for everything.** Every action — changing sounds, listing themes, resetting to default — should be a single command. No multi-step flows.
 
@@ -141,7 +141,7 @@ Naming the themes is itself a product decision — these names are shareable con
 | Metric | Target (30 days post-launch) |
 |---|---|
 | GitHub Stars | 500+ |
-| Homebrew installs | 200+ |
+| CLI installs | 200+ |
 | Organic X mentions / shares | 50+ |
 | Issues / feature requests filed | Signal of engagement, not a target number |
 

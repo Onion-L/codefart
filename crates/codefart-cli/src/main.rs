@@ -18,7 +18,9 @@ fn main() {
         Commands::SetSound { path } => cmd_set_sound(&path),
         Commands::Reset => cmd_reset(),
         Commands::Clear => cmd_clear(),
+        Commands::Remove => cmd_clear(),
         Commands::Setup => cmd_setup(),
+        Commands::Uninstall => cmd_uninstall(),
         Commands::Status => cmd_status(),
         Commands::Preview { name } => cmd_preview(&name),
         Commands::Update => cmd_update(),
@@ -151,6 +153,15 @@ fn cmd_setup() -> Result<(), CodefartError> {
         Ok(false) => {
             println!("CodeFart hook is already installed. Nothing to do.");
         }
+        Err(e) => return Err(e),
+    }
+    Ok(())
+}
+
+fn cmd_uninstall() -> Result<(), CodefartError> {
+    match codefart_core::setup::uninstall_hook() {
+        Ok(true) => println!("✓ Removed Stop hook from ~/.claude/settings.json"),
+        Ok(false) => println!("No CodeFart hook found. Nothing to do."),
         Err(e) => return Err(e),
     }
     Ok(())

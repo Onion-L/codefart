@@ -7,6 +7,7 @@ import SoundUpload from "./components/SoundUpload";
 import NotificationPrefs from "./components/NotificationPrefs";
 import AutostartToggle from "./components/AutostartToggle";
 import HookSection from "./components/HookSection";
+import UpdateChecker from "./components/UpdateChecker";
 
 interface ThemeInfo {
     name: string;
@@ -167,6 +168,10 @@ function App() {
                                 enabled={state.autostart}
                                 onToggle={handleAutostartToggle}
                             />
+                        </div>
+
+                        <div className="section">
+                            <UpdateChecker />
                         </div>
                     </>
                 )}

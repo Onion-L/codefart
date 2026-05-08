@@ -385,3 +385,78 @@ body::before {
     margin-top: 8px;
     line-height: 1.5;
 }
+
+/* ── Update Checker ── */
+.update-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.update-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.update-label {
+    font-size: 14px;
+}
+
+.btn-sm {
+    font-size: 12px;
+    padding: 4px 12px;
+}
+
+.update-msg {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    border-radius: 12px 4px 12px 4px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.update-loading {
+    background: var(--sticky);
+    color: var(--muted);
+    border: 2px dashed rgba(26, 20, 16, 0.18);
+}
+
+.update-error {
+    background: #fff1ef;
+    color: #8f1d15;
+    border: 2px solid #fecaca;
+}
+
+.update-uptodate {
+    background: #d1fae5;
+    color: #065f46;
+    border: 2px solid #a7f3d0;
+    padding: 6px 12px;
+    border-radius: 12px 4px 12px 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.update-badge {
+    background: var(--orange);
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 2px solid var(--text);
+}
+
+.update-versions {
+    font-size: 13px;
+}
+
+.update-dl {
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 4px;
+}
